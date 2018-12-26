@@ -1,0 +1,9 @@
+DONE:
+ - Download with prefix URL;
+ - Download with URL get from user;
+ - Set youtube-dl options prefix/from file;
+ - Store name prefix/user choose;
+
+TODO:
+ - Change to GUI;
+ - Fix user CLI;
