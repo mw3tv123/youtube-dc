@@ -145,7 +145,6 @@ def search_by_keywords(keyword=''):
 
 
 def download_video(url):
-    print('\n\n')
     with youtube_dl.YoutubeDL(options) as ydl:
         if type(url) == str:
             ydl.download([url])
@@ -166,6 +165,7 @@ def user_interface():
     else:
         url = input('>>> Enter the URL of the video: ')
         download_video(url)
+        print('\b\r\r[DONE]')
 
 
 def main():
@@ -184,9 +184,9 @@ def main():
         search_by_keywords(args.keyword)
     elif args.url is not None:
         download_video(args.url)
+        print('\b\r\r[DONE]')
     else:
         user_interface()
-    print('\b\r\r[DONE]')
 
 
 if __name__ == "__main__":
