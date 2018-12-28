@@ -1,18 +1,13 @@
 # Import library
 from __future__ import unicode_literals
 from datetime import datetime
+from urllib.parse import quote
+from urllib import request
 from bs4 import BeautifulSoup
 import argparse
 import json
 import logging
 import youtube_dl
-try:
-    # Python 2.x
-    from urllib import quote, request
-except:
-    # Python 3.x
-    from urllib.parse import quote
-    from urllib import request
 
 '''
     This Python script enable user to download a YouTube video back to our computer and
