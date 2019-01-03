@@ -130,7 +130,7 @@ class CoreProcess:
         html = response.read()
         soup = BeautifulSoup(html, 'html.parser')
         for video in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
-            print('https://www.youtube.com' + video['href'])
+            yield "https://www.youtube.com" + video['href']
 
     def download_video(self, url):
         """

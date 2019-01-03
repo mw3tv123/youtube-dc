@@ -1,0 +1,13 @@
+DONE:
+ - Download with prefix URL;
+ - Download with URL get from user;
+ - Set youtube-dl options prefix/from file;
+ - Store name prefix/user choose;
+ - Setup basic GUI;
+ - Function 2 entries: download from url and search keyword;
+ - Function all buttons.
+
+TODO:
+ - Show search result into text widget (detail if possible);
+ - Improve layout;
+ - ???

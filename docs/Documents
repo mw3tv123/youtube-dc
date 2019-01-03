@@ -1,0 +1,41 @@
+# Day started: 24/12/2018
+# Version 0.1.10
+# Author: HUNG TRAN QUOC
+
+==> Currently support: Linux-like OS
+
+1) Introduction:
+- This is a small project create for my own purpose while learning thing from Python and its modules.
+- All modules in here can be find below.
+- This project (YouTube Downloader/Converter App) intend to search and download YouTube videos from and applicant;
+
+2) Requirement:
+- Python 3.x
+
+# -----     Primary modules     ----- #
+- youtube-dl            -   Core, for download video and convert YouTube video;
+- logging               -   For storing errors during running;
+- json                  -   For dealing with json file like configuration,...;
+- bs4/BeautifulSoup     -   For scraping HTML structure of YouTube search result;
+- urllib                -   For modifying keywords into query data which is used for search;
+- argparse              -   For parsing data through CLI and creating console interface;
+- tkinter               -   For creating GUI;
+
+# -----  Side/Optional modules  ----- #
+  (For getting additional information)
+- datetime
+- __future__
+
+3) Usage:
+# Commandline - Interface:
+$ python3 CLI.py
+
+    This will lead to command console, which can choose to download from a URL or search for a keywords. Additional options below:
+-u, --url=<URL>                 URL of the YouTube video want to download.
+-c, --config=<config_file>      Absolute path to the pre-define options.
+-f, --file=<destination>        Name and path of the downloaded file.
+-F, --format=<extension>        File format, currently support can be found at youtube-dl module documents.
+-k, --keyword=<string>          A string of keywords want to search.
+
+# Graphic User Interface:
+$ python3 GUI.py
