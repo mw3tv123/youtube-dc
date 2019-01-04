@@ -1,122 +1,141 @@
-import tkinter
+import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
 from coreprocess import CoreProcess
 
-"""
-    This sector handle GUI, and inherit from CoreProcess to process data.
-"""
 
-# VARIABLES
-core_process = CoreProcess()
-root = tkinter.Tk()
-root.title("YouTube downloader/converter")
-path = "./python_logo.png"
-option_choose = tkinter.BooleanVar()
-download_url_value = tkinter.StringVar()
-keyword_value = tkinter.StringVar()
-option_choose.set(0)
+class YoutubeDownloaderApp(object):
+    """This sector handle GUI, and inherit from CoreProcess to process data."""
+    core_process = CoreProcess()
+    LOGO_PATH = "/home/tqhung1/Works/github/CompletedPY/youtube-dl/python_logo.png"
 
+    def __init__(self, parent):
+        """Constructor"""
+        self.root = parent
+        self.root.title("YouTube downloader/converter")
+        self.root.resizable(width=False, height=False)
+        self.root.protocol("WM_DELETE_WINDOW", self.exit_messages_box)
+        self.frame = tk.Frame(parent)
+        self.menu = tk.Menu(self.root)
+        self.root.config(menu=self.menu)
+        self.frame.pack()
 
-def new_file():
-    print("New File!")
+        option_choose = tk.BooleanVar()
+        download_url_value = tk.StringVar()
+        keyword_value = tk.StringVar()
 
+        # ------------ MENU BAR -------------- #
+        menu_bar = tk.Menu(self.menu)
+        self.menu.add_cascade(label="File", menu=menu_bar)
+        menu_bar.add_command(label="Open...", command=self.open_file_location)
+        menu_bar.add_command(label="About", command=self.about)
+        menu_bar.add_command(label="Exit", command=self.exit_messages_box)
 
-def about():
-    print("This is a simple example of a menu!")
+        # ------------ LOGO -------------- #
+        image = tk.PhotoImage(file=self.LOGO_PATH)
+        canvas_width = canvas_height = 240
+        self.canvas = tk.Canvas(self.frame, width=canvas_width, height=canvas_height)
+        self.canvas.create_image(30, 30, anchor=tk.NW, image=image)
 
+        # ------------ LABEL -------------- #
+        self.download_from_url_label = tk.Label(self.frame, text="Direct download from URL:")
+        self.search_label = tk.Label(self.frame, text="Search YouTube by keywords:")
+        self.logo_title_label = tk.Label(self.frame, text="A Python applicant")
+        self.result_text = tk.Text(self.frame, bd=2, height=20, width=40, state=tk.DISABLED)
 
-def exit_messages_box():
-    if messagebox.askyesno(title='Confirm log', message='Really want to exit the program?'):
-        quit()
+        # ------------ ENTRY -------------- #
+        self.download_from_url_entry = tk.Entry(self.frame, textvariable=download_url_value)
+        self.search_entry = tk.Entry(self.frame, textvariable=keyword_value, state=tk.DISABLED)
 
+        # ------------ RADIO BUTTON -------------- #
+        self.option1_rb = tk.Radiobutton(self.frame,
+                                         text="Download from URL",
+                                         variable=option_choose,
+                                         value=0
+                                         )
+        self.option2_rb = tk.Radiobutton(self.frame,
+                                         text="Search YouTube",
+                                         variable=option_choose,
+                                         value=1
+                                         )
 
-def open_file_location():
-    file_manager_dialog = filedialog.askopenfilename()
-    print(file_manager_dialog)
+        # ------------ BUTTON -------------- #
+        self.open_file_location_button = tk.Button(self.frame,
+                                                   text="Open download folder",
+                                                   command=self.open_file_location
+                                                   )
+        self.search_and_download_button = tk.Button(self.frame,
+                                                    text="Download/Search",
+                                                    command=lambda: self.on_click_download_button(self.result_text, download_url_value, keyword_value)
+                                                    )
+        self.exit_button = tk.Button(self.frame, text="Exit", command=self.exit_messages_box)
 
+        self.window_layout()
 
-def on_click_download_button():
-    if download_url_value.get():
-        core_process.download_video(download_url_value.get())
-    elif keyword_value.get():
-        result = core_process.search_by_keywords(keyword_value.get())
-        for var in result:
-            print(var)
-    else:
-        title = "No data input"
-        msg = "You haven't enter neither URL nor keywords yet. Enter it please!"
-        messagebox.showwarning(title=title, message=msg)
+    def window_layout(self):
+        """Manage components layout of the window"""
+        # LABEL
+        self.download_from_url_label.grid(row=0, column=0, columnspan=2)
+        self.search_label.grid(row=2, column=0, columnspan=2)
+        self.logo_title_label.grid(row=7, column=2)
+
+        # LOGO
+        self.canvas.grid(row=0, column=2, rowspan=7)
+
+        # ENTRY
+        self.download_from_url_entry.grid(row=1, column=1)
+        self.search_entry.grid(row=3, column=1)
+
+        # RADIO BUTTON
+        self.option1_rb.grid(row=1, column=0)
+        self.option2_rb.grid(row=3, column=0)
+
+        # TEXT
+        self.result_text.grid(padx=10, pady=10, row=4, column=0, rowspan=10, columnspan=2)
+
+        # BUTTON
+        self.open_file_location_button.grid(row=8, column=2)
+        self.search_and_download_button.grid(row=9, column=2)
+        self.exit_button.grid(row=10, column=2)
+
+    def about(self):
+        """"""
+        title = "About"
+        info_msg = "YouTube Downloader/Converter\nVersion0.10.2412"
+        messagebox.showinfo(title=title, message=info_msg)
+
+    def exit_messages_box(self):
+        """"""
+        title = "Confirm messages"
+        confirm_msg = "Really want to exit the program?"
+        if messagebox.askyesno(title=title, message=confirm_msg) is True:
+            self.root.quit()
+
+    def open_file_location(self):
+        """"""
+        file_manager_dialog = filedialog.askopenfilename()
+        print(file_manager_dialog)
+
+    def on_click_download_button(self, text_field, download_url, keyword):
+        """"""
+        if download_url.get():
+            self.core_process.download_video(download_url.get())
+        elif keyword.get():
+            result = self.core_process.search_by_keywords(keyword.get())
+            text_field.config(state=tk.NORMAL)
+            text_field.delete(1.0, tk.END)
+            for var in result:
+                text_field.insert(tk.END, var + "\n")
+            text_field.config(state=tk.DISABLED)
+        else:
+            title = "No data input"
+            warning_msg = "You haven't enter neither URL nor keywords yet. Enter it please!"
+            messagebox.showwarning(title=title, message=warning_msg)
 
 
 def main():
-    root.resizable(width=False, height=False)
-    root.protocol("WM_DELETE_WINDOW", exit_messages_box)
-    frame = tkinter.Frame(root)
-    menu = tkinter.Menu(root)
-    root.config(menu=menu)
-    frame.pack()
-
-    # -----     DECLARE     ----- #
-
-    # MENU
-    filemenu = tkinter.Menu(menu)
-    menu.add_cascade(label="File", menu=filemenu)
-    filemenu.add_command(label="New", command=new_file)
-    filemenu.add_command(label="Open...", command=open_file_location)
-    filemenu.add_command(label="Exit", command=exit_messages_box)
-
-    # LOGO
-    image = tkinter.PhotoImage(file='./python_logo.png')
-    canvas_width = canvas_height = 240
-    canvas = tkinter.Canvas(frame, width=canvas_width, height=canvas_height)
-    canvas.create_image(30, 30, anchor=tkinter.NW, image=image)
-
-    # LABEL
-    download_from_url_label = tkinter.Label(frame, text="Direct download from URL:")
-    search_label = tkinter.Label(frame, text="Search YouTube by keywords:")
-    logo_title_label = tkinter.Label(frame, text="A Python applicant")
-    result_text = tkinter.Text(frame, height=5, width=45)
-
-    # ENTRY
-    download_from_url_entry = tkinter.Entry(frame, textvariable=download_url_value)
-    search_entry = tkinter.Entry(frame, textvariable=keyword_value)
-
-    # RADIO BUTTON
-    option1 = tkinter.Radiobutton(frame, text="Download from URL", variable=option_choose, value=1)
-    option2 = tkinter.Radiobutton(frame, text="Search YouTube", variable=option_choose, value=0)
-
-    # BUTTON
-    open_file_location_button = tkinter.Button(frame, text="Open download folder", command=open_file_location)
-    search_and_download_button = tkinter.Button(frame, text="Download/Search", command=on_click_download_button)
-    exit_button = tkinter.Button(frame, text="Exit", command=exit_messages_box)
-
-    # ----     LAYOUT     ---- #
-
-    # LABEL
-    download_from_url_label.grid(row=0, column=0, columnspan=2)
-    search_label.grid(row=2, column=0, columnspan=2)
-    logo_title_label.grid(row=7, column=2)
-
-    # LOGO
-    canvas.grid(row=0, column=2, rowspan=5)
-
-    # ENTRY
-    download_from_url_entry.grid(row=1, column=1)
-    search_entry.grid(row=3, column=1)
-
-    # RADIO BUTTON
-    option1.grid(row=1, column=0)
-    option2.grid(row=3, column=0)
-
-    # TEXT
-    result_text.grid(row=4, column=0, rowspan=10, columnspan=2)
-
-    # BUTTON
-    open_file_location_button.grid(row=8, column=2)
-    search_and_download_button.grid(row=9, column=2)
-    exit_button.grid(row=10, column=2)
-
+    root = tk.Tk()
+    my_app = YoutubeDownloaderApp(root)
     root.mainloop()
 
 
