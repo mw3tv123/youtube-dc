@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup
 import logging
 import json
 import youtube_dl
+import subprocess
+# import re
 
 '''
     This Python script enable user to download a YouTube video back to our computer and
@@ -78,6 +80,18 @@ class CoreProcess:
     def __init__(self, options=None, default_storage_directory=''):
         if options is not None:
             self.options = options
+        else:
+            self.options = {
+                'format': 'bestaudio',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+                'restrictfilenames': True,
+                'logger': LogHandler(),
+                'progress_hooks': [progress_handler],
+            }
         if default_storage_directory is True:
             self.default_storage_directory = default_storage_directory
 
@@ -87,18 +101,6 @@ class CoreProcess:
 
         :param kwargs: Pair of keyword to indicate option (path, file,...)
         """
-        self.options = {
-            'format': 'bestaudio',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'restrictfilenames': True,
-            'logger': LogHandler(),
-            'progress_hooks': [progress_handler],
-        }
-
         if 'file' in kwargs:
             self.options['outtmpl'] = kwargs['file']
         if 'file_format' in kwargs:
@@ -138,9 +140,34 @@ class CoreProcess:
 
         :param url: List of string or an string of YouTube URL want to download
         """
+        # if url
+
         with youtube_dl.YoutubeDL(self.options) as ydl:
             if type(url) == str:
                 ydl.download([url])
             else:
                 for element in url:
                     ydl.download([element])
+
+    def open_storage_file(self):
+        """
+        Open a files manager with an absolute path.
+        :return: True and open Files Manager with specific path or False if file doesn't exist or wrong path.
+        """
+        if 'outtmpl' in self.options:
+            path = self.options['outtmpl']
+        else:
+            path = self.default_storage_directory
+        if path.startswith("."):
+            temp_path = path.split("/")
+            path = ""
+            for i in range(len(temp_path)-1):
+                if temp_path[i] == ".":
+                    continue
+                path += "/" + temp_path[i]
+            path = subprocess.check_output("pwd").decode("utf-8").replace("\n", "") + path
+        try:
+            subprocess.call("nautilus -w " + path, stderr=subprocess.DEVNULL, shell=True)
+            return True
+        except OSError:
+            return False

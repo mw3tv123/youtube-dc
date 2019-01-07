@@ -5,9 +5,13 @@ DONE:
  - Store name prefix/user choose;
  - Setup basic GUI;
  - Function 2 entries: download from url and search keyword;
- - Function all buttons.
+ - Function all buttons;
+ - Open files manager.
 
 TODO:
+ - Priority: Create an extended Frame which let user to define setting;
  - Show search result into text widget (detail if possible);
  - Improve layout;
+ - Show logo;
+ - Cross OS support (Windows, MacOS,...);
  - ???
