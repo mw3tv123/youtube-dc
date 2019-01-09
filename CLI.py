@@ -66,11 +66,16 @@ def user_interface():
     if user_choose == 1:
         keyword = input('>>> Enter the keyword: ')
         print('{:^40}'.format('==> RESULT <=='))
-        core_process.search_by_keywords(keyword)
+        result = core_process.search_by_keywords(keyword)
+        for val in result:
+            print(val)
     else:
         url = input('>>> Enter the URL of the video: ')
-        core_process.download_video(url)
-        print('\b\r\r[DONE]')
+        result = core_process.download_video(url)
+        if result is True:
+            print('\b\r\r[DONE]')
+        else:
+            print('Wrong YouTube URL. Check your URL again!')
 
 
 def main():
@@ -86,10 +91,16 @@ def main():
     core_process.load_config(path=path, file=audio_folder, file_format=format_option)
 
     if args.keyword:
-        core_process.search_by_keywords(args.keyword)
+        print('{:^40}'.format('==> RESULT <=='))
+        result = core_process.search_by_keywords(args.keyword)
+        for val in result:
+            print(val)
     elif args.url is not None:
-        core_process.download_video(args.url)
-        print('[DONE]')
+        result = core_process.download_video(args.url)
+        if result is True:
+            print('\b\r\r[DONE]')
+        else:
+            print('Wrong YouTube URL. Check your URL again!')
     else:
         user_interface()
 

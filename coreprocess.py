@@ -7,7 +7,6 @@ import logging
 import json
 import youtube_dl
 import subprocess
-# import re
 
 '''
     This Python script enable user to download a YouTube video back to our computer and
@@ -70,14 +69,16 @@ def progress_handler(progress_status):
 
 class CoreProcess:
     logging.basicConfig(filename='./error_logs.txt', level=logging.DEBUG)
-    default_storage_directory = './my_audio/%(TITLE)s.%(EXT)s'
+    default_storage_directory = "./my_audio/%(title)s.%(ext)s"
     options = {}
 
     """
     Main process, handle amost everything.
     """
 
-    def __init__(self, options=None, default_storage_directory=''):
+    def __init__(self, options=None, storage_directory=''):
+        if storage_directory is True:
+            self.default_storage_directory = storage_directory
         if options is not None:
             self.options = options
         else:
@@ -85,15 +86,14 @@ class CoreProcess:
                 'format': 'bestaudio',
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
+                    'preferredcodec': 'm4a',
                     'preferredquality': '192',
                 }],
+                'outtmpl': self.default_storage_directory,
                 'restrictfilenames': True,
                 'logger': LogHandler(),
                 'progress_hooks': [progress_handler],
             }
-        if default_storage_directory is True:
-            self.default_storage_directory = default_storage_directory
 
     def load_config(self, **kwargs):
         """
@@ -140,7 +140,8 @@ class CoreProcess:
 
         :param url: List of string or an string of YouTube URL want to download
         """
-        # if url
+        if not url.startswith("https://www.youtube.com/watch?v="):
+            return False
 
         with youtube_dl.YoutubeDL(self.options) as ydl:
             if type(url) == str:
@@ -148,6 +149,7 @@ class CoreProcess:
             else:
                 for element in url:
                     ydl.download([element])
+        return True
 
     def open_storage_file(self):
         """
@@ -158,13 +160,16 @@ class CoreProcess:
             path = self.options['outtmpl']
         else:
             path = self.default_storage_directory
+        relate_path = False
         if path.startswith("."):
-            temp_path = path.split("/")
-            path = ""
-            for i in range(len(temp_path)-1):
-                if temp_path[i] == ".":
-                    continue
-                path += "/" + temp_path[i]
+            relate_path = True
+        temp_path = path.split("/")
+        path = ""
+        for i in range(len(temp_path)-1):
+            if temp_path[i] == "." or temp_path[i] == "":
+                continue
+            path += "/" + temp_path[i]
+        if relate_path is True:
             path = subprocess.check_output("pwd").decode("utf-8").replace("\n", "") + path
         try:
             subprocess.call("nautilus -w " + path, stderr=subprocess.DEVNULL, shell=True)
