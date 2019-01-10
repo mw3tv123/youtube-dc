@@ -1,0 +1,10 @@
+{
+    "format": "bestaudio/best",
+    "postprocessors": {
+        "key": "FFmpegExtractAudio",
+        "preferredcodec": "mp3",
+        "preferredquality": "192"
+    },
+    "logger": "LogHandler",
+    "progress_hooks": "progress_handler"
+}
