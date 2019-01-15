@@ -1,6 +1,6 @@
 # Import library
 import argparse
-from coreprocess import CoreProcess
+from sources.coreprocess import CoreProcess
 
 """
     This sector handle command-line interface, and inherit from CoreProcess to process data.

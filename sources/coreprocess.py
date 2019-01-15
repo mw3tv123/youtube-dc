@@ -12,9 +12,9 @@ import subprocess
     This Python script enable user to download a YouTube video back to our computer and
     convert it to any format. This is a tiny project for learning new thing from Python.
 
-                    |-----------------------------|
-                    | Module used in this project |
-                    |-----------------------------|
+                    |------------------------------|
+                    |  Module used in this script  |
+                    |------------------------------|
 
         - datetime          --> For get system time.
         - bs4/BeautifulSoup --> For working with html contents.
@@ -36,24 +36,22 @@ import subprocess
 
 
 class LogHandler(object):
-    """
-    LogHandler handle messages for each case
-    """
+    """LogHandler handle messages for each case"""
+
     def debug(self, msg):
         pass
 
     def warning(self, msg):
         pass
 
-    def error(self, msg):
+    @staticmethod
+    def error(msg):
         print(msg)
         logging.error('{0} - Error: {1}'.format(datetime.now(), msg))
 
 
 def progress_handler(progress_status):
-    """
-    Here we can make anything we want referent for each process
-    """
+    """Here we can make anything we want referent for each process"""
     if progress_status['status'] == 'downloading':
         print('[DOWNLOADING] {0}Downloaded: {1}Time left: {2}DL Speed: {3}'.format(
             progress_status['filename'],
@@ -68,13 +66,12 @@ def progress_handler(progress_status):
 
 
 class CoreProcess:
-    logging.basicConfig(filename='./error_logs.txt', level=logging.DEBUG)
-    default_storage_directory = "./my_audio/%(title)s.%(ext)s"
+    logging.basicConfig(filename='/home/tqhung1/Works/youtube-dc/option_and_log/error_logs.txt', level=logging.DEBUG)
+    default_storage_directory = "/home/tqhung1/Works/youtube-dc/my_audio/%(title)s.%(ext)s"
+    options_file_path = "/home/tqhung1/Works/youtube-dc/option_and_log/option_config.txt"
     options = {}
 
-    """
-    Main process, handle amost everything.
-    """
+    """Main process, handle amost everything."""
 
     def __init__(self, options=None, storage_directory=''):
         if storage_directory is True:
@@ -86,7 +83,7 @@ class CoreProcess:
                 'format': 'bestaudio',
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'm4a',
+                    'preferredcodec': 'mp3',
                     'preferredquality': '192',
                 }],
                 'outtmpl': self.default_storage_directory,
@@ -94,6 +91,7 @@ class CoreProcess:
                 'logger': LogHandler(),
                 'progress_hooks': [progress_handler],
             }
+        self.load_config(path=self.options_file_path)
 
     def load_config(self, **kwargs):
         """
@@ -114,10 +112,27 @@ class CoreProcess:
                     if 'format' in data:
                         self.options['format'] = data['format']
                     if 'postprocessors' in data:
-                        self.options['postprocessors'] = []
-                        self.options['postprocessors'].append(data['postprocessors'])
+                        self.options['postprocessors'].clear()
+                        self.options['postprocessors'] = data['postprocessors']
+                    if 'restrictfilenames' in data:
+                        self.options['restrictfilenames'] = data['restrictfilenames']
                 except json.JSONDecodeError as e:
                     logging.error('{0} - Encountered error: {1}'.format(datetime.now(), e))
+
+    def save_setting(self):
+        """"""
+        data = {}
+        for k, v in self.options.items():
+            if isinstance(v, LogHandler):
+                continue
+            if type(v) == list and callable(v[0]):
+                continue
+            data[k] = v
+        with open(self.options_file_path, "w") as file:
+            try:
+                json.dump(data, file)
+            except TypeError as e:
+                logging.error("{0} - Encountered error: {1}".format(datetime.now(), e))
 
     @staticmethod
     def search_by_keywords(keyword=''):
@@ -156,23 +171,25 @@ class CoreProcess:
         Open a files manager with an absolute path.
         :return: True and open Files Manager with specific path or False if file doesn't exist or wrong path.
         """
-        if 'outtmpl' in self.options:
-            path = self.options['outtmpl']
-        else:
-            path = self.default_storage_directory
-        relate_path = False
-        if path.startswith("."):
-            relate_path = True
-        temp_path = path.split("/")
-        path = ""
-        for i in range(len(temp_path)-1):
-            if temp_path[i] == "." or temp_path[i] == "":
-                continue
-            path += "/" + temp_path[i]
-        if relate_path is True:
-            path = subprocess.check_output("pwd").decode("utf-8").replace("\n", "") + path
+        path = self.get_absolute_path(self.options['outtmpl'])
         try:
             subprocess.call("nautilus -w " + path, stderr=subprocess.DEVNULL, shell=True)
             return True
         except OSError:
             return False
+
+    @staticmethod
+    def get_absolute_path(path):
+        """Get the absolute path from a relative path or a template path"""
+        relate_path = False
+        if path.startswith(".") or path.startswith(".."):
+            relate_path = True
+        temp_path = path.split("/")
+        path = ""
+        for i in range(len(temp_path) - 1):
+            if temp_path[i] == "." or temp_path[i] == ".." or temp_path[i] == "":
+                continue
+            path += "/" + temp_path[i]
+        if relate_path is True:
+            path = subprocess.check_output("pwd").decode("utf-8").replace("\n", "") + path
+        return path
