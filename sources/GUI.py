@@ -4,6 +4,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import scrolledtext
 from PIL import Image
+import threading
 
 from sources.coreprocess import CoreProcess
 from lib.ToolTip import Tooltip
@@ -24,7 +25,8 @@ class AdvanceFrame(tk.Frame):
     """An extended frame contains program setting"""
     def __init__(self, original, core_process):
         """Constructor"""
-        tk.Frame.__init__(self, original)
+        self.master = original
+        tk.Frame.__init__(self, self.master)
         self.cp = core_process
 
         # ------------ VARIABLES ------------- #
@@ -122,10 +124,8 @@ class AdvanceFrame(tk.Frame):
         if name == "fm":
             if self.format_value.get() == "Best Audio":
                 self.cp.options["format"] = "bestaudio"
-                return
             if self.format_value.get() == "Worst Audio":
                 self.cp.options["format"] = "worstaudio"
-                return
         if name == "ext":
             self.cp.options["postprocessors"][0]["preferredcodec"] = self.extension_value.get()
 
@@ -166,6 +166,7 @@ class YoutubeDownloader(object):
         option_choose = tk.BooleanVar()
         download_url_value = tk.StringVar()
         keyword_value = tk.StringVar()
+        self.download_status_value = tk.StringVar()
 
         # ------------ MENU BAR -------------- #
         self.menu = tk.Menu(self.root)
@@ -180,21 +181,35 @@ class YoutubeDownloader(object):
         self.setting_frame = AdvanceFrame(self.root, self.core_process)
 
         # -------------- LABEL --------------- #
-        self.logo_title_label = tk.Label(self.main_frame, text="A Python applicant")
+        self.logo_title_lb = tk.Label(self.main_frame, text="A Python applicant")
+        self.download_status_lb = ttk.Label(self.main_frame, textvariable=self.download_status_value)
 
         # -------------- TEXT ---------------- #
-        self.result_labelframe = ttk.Labelframe(self.main_frame, text="Result")
-        self.result_text = scrolledtext.ScrolledText(self.result_labelframe, height=25, width=55, state=tk.DISABLED)
+        self.result_lf = ttk.Labelframe(self.main_frame, text="Result")
+        self.result_txt = scrolledtext.ScrolledText(self.result_lf, height=25, width=55, state=tk.DISABLED)
+
+        # ----------- PROGRESSBAR ------------ #
+        self.download_pb = ttk.Progressbar(self.main_frame, orient=tk.HORIZONTAL, length=100, mode="indeterminate")
 
         # -------------- ENTRY --------------- #
-        self.download_url_entry = tk.Entry(self.main_frame,
-                                           textvariable=download_url_value,
-                                           width=30,
-                                           state=tk.DISABLED)
-        self.search_entry = tk.Entry(self.main_frame,
-                                     textvariable=keyword_value,
-                                     width=30,
-                                     state=tk.DISABLED)
+        self.download_url_et = tk.Entry(self.main_frame,
+                                        textvariable=download_url_value,
+                                        width=30,
+                                        state=tk.DISABLED)
+        self.download_url_et.bind("<Return>", lambda event: self.on_click_download(self.download_url_et,
+                                                                                   self.search_et,
+                                                                                   self.result_txt,
+                                                                                   download_url_value,
+                                                                                   keyword_value))
+        self.search_et = tk.Entry(self.main_frame,
+                                  textvariable=keyword_value,
+                                  width=30,
+                                  state=tk.DISABLED)
+        self.search_et.bind("<Return>", lambda event: self.on_click_download(self.download_url_et,
+                                                                             self.search_et,
+                                                                             self.result_txt,
+                                                                             download_url_value,
+                                                                             keyword_value))
 
         # ----------- RADIO BUTTON ----------- #
         self.option1_rb = tk.Radiobutton(self.main_frame,
@@ -209,23 +224,26 @@ class YoutubeDownloader(object):
                                          value=1)
 
         # -------------- BUTTON -------------- #
-        self.open_file_location_button = tk.Button(self.main_frame,
-                                                   text="Open download folder",
-                                                   command=self.on_open_file)
-        self.search_and_download_button = tk.Button(self.main_frame,
-                                                    text="Download/Search",
-                                                    command=lambda: self.on_click_download(self.download_url_entry,
-                                                                                           self.search_entry,
-                                                                                           self.result_text,
-                                                                                           download_url_value,
-                                                                                           keyword_value))
-        self.exit_button = tk.Button(self.main_frame, text="Exit", command=self.on_exit)
-        self.setting_button = tk.Button(self.main_frame, text="Setting", command=self.on_open_setting)
+        self.open_file_location_bt = tk.Button(self.main_frame,
+                                               text="Open download folder",
+                                               command=self.on_open_file)
+        self.search_and_download_bt = tk.Button(self.main_frame,
+                                                text="Download/Search",
+                                                command=lambda: self.on_click_download(self.download_url_et,
+                                                                                       self.search_et,
+                                                                                       self.result_txt,
+                                                                                       download_url_value,
+                                                                                       keyword_value))
+        self.exit_bt = tk.Button(self.main_frame, text="Exit", command=self.on_exit)
+        self.setting_bt = tk.Button(self.main_frame, text="Setting", command=self.on_open_setting)
 
-        # -------------- LOGO ---------------- #
+        # -------------- IMAGE --------------- #
         logo_image = tk.PhotoImage(file=resize_image("../images/python_logo.png", 140, 140))
         self.logo_icon = ttk.Label(self.main_frame, image=logo_image)
         self.logo_icon.photo = logo_image
+        download_icon = tk.PhotoImage(file="../images/Spinner-1.5s-55px.gif")
+        self.download_indicate_icon = ttk.Label(self.main_frame, image=download_icon)
+        # self.download_indicate_icon.photo = download_icon
 
         self.window_layout()
 
@@ -235,34 +253,34 @@ class YoutubeDownloader(object):
         self.main_frame.grid()
 
         # -------------- LABEL --------------- #
-        self.logo_title_label.grid(row=5, column=3)
+        self.logo_title_lb.grid(row=5, column=3)
 
-        # -------------- LOGO ---------------- #
+        # -------------- IMAGE --------------- #
         self.logo_icon.grid(row=0, column=3, rowspan=5)
 
         # -------------- ENTRY --------------- #
-        self.download_url_entry.grid(row=0, column=1)
-        self.search_entry.grid(row=2, column=1)
+        self.download_url_et.grid(row=0, column=1)
+        self.search_et.grid(row=2, column=1)
 
         # ----------- RADIO BUTTON ----------- #
         self.option1_rb.grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
         self.option2_rb.grid(row=2, column=0, sticky=tk.W, padx=10, pady=5)
 
         # -------------- TEXT ---------------- #
-        self.result_labelframe.grid(row=3, column=0, rowspan=8, columnspan=3)
-        self.result_text.pack()
+        self.result_lf.grid(row=6, column=0, rowspan=6, columnspan=3)
+        self.result_txt.pack()
 
         # -------------- BUTTON -------------- #
-        self.open_file_location_button.grid(row=8, column=3)
-        self.search_and_download_button.grid(row=9, column=3)
-        self.exit_button.grid(row=10, column=3)
-        self.setting_button.grid(row=7, column=3)
+        self.open_file_location_bt.grid(row=8, column=3)
+        self.search_and_download_bt.grid(row=9, column=3)
+        self.exit_bt.grid(row=10, column=3)
+        self.setting_bt.grid(row=7, column=3)
 
     @staticmethod
     def about():
         """Show program info"""
         title = "About"
-        info_msg = "YouTube Downloader/Converter\nVersion0.10.2412"
+        info_msg = "YouTube Downloader/Converter\nVersion0.22.2512"
         messagebox.showinfo(title=title, message=info_msg)
 
     def on_exit(self):
@@ -281,29 +299,60 @@ class YoutubeDownloader(object):
             error_msg = "Folder not exist or wrong file path. Please check your configuration again!"
             messagebox.showerror(title=title, message=error_msg)
 
+    @staticmethod
+    def _check_url(url):
+        """Check URL"""
+        if not url.startswith("https://www.youtube.com/watch?v="):
+            return False
+        return True
+
+    def _check_download_progress(self, progress):
+        """Interval check download progress to stop the progress bar"""
+        if progress.is_alive():
+            self.download_status_value.set(self.core_process.status["status"])
+            self.root.after(500, self._check_download_progress, progress)
+        else:
+            done_icon = tk.PhotoImage(file="")
+            self.download_indicate_icon = ttk.Label(self.main_frame, image=done_icon)
+            self.download_status_value.set("DONE")
+            self.download_pb.stop()
+
+    def _start_download_progress(self, uri):
+        """Split downloader function into a separate thread to avoid interferes with tkinter"""
+        global downloading_thread
+        downloading_thread = threading.Thread(target=self.core_process.download_video, args=[uri])
+        downloading_thread.daemon = True
+        self.download_indicate_icon.grid(row=3, column=0, columnspan=3)
+        self.download_pb.grid(row=4, column=0, columnspan=3)
+        self.download_status_lb.grid(row=5, column=0, columnspan=3)
+        self.download_pb.start()
+        downloading_thread.start()
+        self.root.after(500, self._check_download_progress, downloading_thread)
+
     def on_click_download(self, download_entry_state, keyword_entry_state, text_field, download_url, keyword):
         """
         Check which options does user choose: download an URL or search for keyword.
 
-        :param Entry download_entry_state: The download url Entry Object.
-        :param Entry keyword_entry_state: The search Entry Object.
-        :param Text text_field: The result Text where all search result show.
-        :param Object download_url: The tk Object which store the download entry value.
-        :param Object keyword: The tk Object which store the search entry value.
+        :param Entry download_entry_state:  The download url Entry Object.
+        :param Entry keyword_entry_state:   The search Entry Object.
+        :param Text text_field:             The result Text where all search result show.
+        :param Object download_url:         The tk Object which store the download entry value.
+        :param Object keyword:              The tk Object which store the search entry value.
         """
-        if "normal" in download_entry_state.config()["state"] and download_url.get():
-            result = self.core_process.download_video(download_url.get())
-            if result is False:
+        url = download_url.get()
+        if "normal" in download_entry_state.config()["state"] and url:
+            if self._check_url(url) is False:
                 title = "Can't download the URL video"
                 error_msg = "The URL is not valid!"
                 messagebox.showerror(title=title, message=error_msg)
+                return
+            self._start_download_progress(url)
         elif "normal" in keyword_entry_state.config()["state"] and keyword.get():
             result = self.core_process.search_by_keywords(keyword.get())
             text_field.config(state=tk.NORMAL)
             text_field.delete(1.0, tk.END)
             for var in result:
                 text_field.insert(tk.END, var + "\n")
-            text_field.config(state=tk.DISABLED)
         else:
             title = "No data input"
             warning_msg = "You haven't enter neither URL nor keywords yet. Enter it please!"
@@ -312,12 +361,11 @@ class YoutubeDownloader(object):
     def on_change_option(self, radio_button):
         """Automate disabled Entry widget referent to the radio option user choose"""
         if radio_button["text"].startswith("Download"):
-            self.download_url_entry.config(state=tk.NORMAL)
-            self.search_entry.config(state=tk.DISABLED)
-            return
+            self.download_url_et.config(state=tk.NORMAL)
+            self.search_et.config(state=tk.DISABLED)
         if radio_button["text"].startswith("Search"):
-            self.search_entry.config(state=tk.NORMAL)
-            self.download_url_entry.config(state=tk.DISABLED)
+            self.search_et.config(state=tk.NORMAL)
+            self.download_url_et.config(state=tk.DISABLED)
 
     def on_open_setting(self):
         """Open an extension of setting frame"""
