@@ -1,1 +1,1 @@
-{"postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}], "outtmpl": "/home/tqhung1/Works/youtube-dc/my_audio/%(title)s.%(ext)s", "format": "bestaudio", "restrictfilenames": false}
+{"outtmpl": "/home/tqhung1/Works/youtube-dc/my_audio/%(title)s.%(ext)s", "postprocessors": [{"preferredquality": "192", "preferredcodec": "mp3", "key": "FFmpegExtractAudio"}], "format": "bestaudio", "restrictfilenames": false}

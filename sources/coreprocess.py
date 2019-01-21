@@ -2,11 +2,17 @@ from __future__ import unicode_literals
 from datetime import datetime
 from urllib.parse import quote
 from urllib import request
+from urllib3.exceptions import HTTPError
 from bs4 import BeautifulSoup
 import logging
 import json
 import youtube_dl
 import subprocess
+import time
+
+
+
+from lib.observable import notify_observers
 
 '''
     This Python script enable user to download a YouTube video back to our computer and
@@ -50,7 +56,13 @@ class LogHandler(object):
         logging.error('{0} - Error: {1}'.format(datetime.now(), msg))
 
 
-class CoreProcess:
+def progress_handler(progress_status):
+    """Handler download status"""
+    notify_observers(progress_status)
+    time.sleep(0.2)
+
+
+class CoreProcess(object):
     logging.basicConfig(filename='/home/tqhung1/Works/youtube-dc/option_and_log/error_logs.txt', level=logging.DEBUG)
     default_storage_directory = "/home/tqhung1/Works/youtube-dc/my_audio/%(title)s.%(ext)s"
     options_file_path = "/home/tqhung1/Works/youtube-dc/option_and_log/option_config.txt"
@@ -75,32 +87,9 @@ class CoreProcess:
                 'outtmpl': self.default_storage_directory,
                 'restrictfilenames': True,
                 'logger': LogHandler(),
-                'progress_hooks': [self.progress_handler],
+                'progress_hooks': [progress_handler],
             }
         self.load_config(path=self.options_file_path)
-
-    def progress_handler(self, progress_status):
-        """Handler download status"""
-        if progress_status['status'] == 'downloading':
-            self.status["status"] = progress_status["status"]
-            self.status["filename"] = progress_status["filename"]
-            self.status["downloaded_bytes"] = progress_status["downloaded_bytes"]
-            self.status["elapsed"] = progress_status["elapsed"]
-            self.status["eta"] = progress_status["eta"]
-            self.status["speed"] = progress_status["speed"]
-
-            print('[DOWNLOADING] {0} Downloaded: {1} Time left: {2} DL Speed: {3}'.format(
-                progress_status['filename'],
-                progress_status['downloaded_bytes'],
-                progress_status['eta'],
-                progress_status['speed']
-            ))
-        if progress_status['status'] == 'error':
-            print(progress_status)
-            print('[ERROR] An error occupied while try to download file!')
-        if progress_status['status'] == 'finished':
-            print('--- Finished downloading, converting now...')
-            print(progress_status)
 
     def load_config(self, **kwargs):
         """
@@ -164,12 +153,15 @@ class CoreProcess:
 
         :param url: List of string or an string of YouTube URL want to download
         """
-        with youtube_dl.YoutubeDL(self.options) as ydl:
-            if type(url) == str:
-                ydl.download([url])
-            else:
-                for element in url:
-                    ydl.download([element])
+        try:
+            with youtube_dl.YoutubeDL(self.options) as ydl:
+                if type(url) == str:
+                    ydl.download([url])
+                else:
+                    for element in url:
+                        ydl.download([element])
+        except HTTPError as e:
+            logging.error("{0} - Encountered error: {1}".format(datetime.now(), e))
 
     def open_storage_file(self):
         """

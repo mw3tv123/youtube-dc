@@ -1,0 +1,9 @@
+urllib
+bs4
+logging
+json
+youtube-dl
+subprocess
+tkinter
+PIL
+threading
