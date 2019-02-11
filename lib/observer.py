@@ -5,5 +5,17 @@ class Observer(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def update(self, *args, **kwargs):
+    def download_status(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def debug(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def warning(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def error(self, *args, **kwargs):
         pass

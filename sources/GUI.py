@@ -8,6 +8,7 @@ import threading
 
 from sources.coreprocess import CoreProcess
 from lib.ToolTip import Tooltip
+from lib.ProgressInlineLabel import PercentageLabel
 from lib.observable import register, unregister
 from lib.observer import Observer
 
@@ -22,8 +23,10 @@ def resize_image(path, width, height):
     image.save(path, extension)
     return path
 
+# ===================================Setting Frame==================================================================== #
 
-class AdvanceFrame(tk.Frame):
+
+class SettingFrame(tk.Frame):
     """An extended frame contains program setting"""
     def __init__(self, original, core_process):
         """Constructor"""
@@ -36,12 +39,14 @@ class AdvanceFrame(tk.Frame):
         self.extension_value = tk.StringVar()
         self.folder_path_value = tk.StringVar()
         self.quality_value = tk.StringVar()
-        self.restricted_value = tk.IntVar()
+        self.restricted_value = tk.BooleanVar()
+        self.debug_mode_value = tk.BooleanVar()
         self.format_value.set(self.get_format_setting())
         self.extension_value.set(self.cp.options["postprocessors"][0]["preferredcodec"])
         self.folder_path_value.set(self.cp.get_absolute_path(self.cp.options["outtmpl"]))
         self.quality_value.set("192")
-        self.restricted_value.set(0)
+        self.restricted_value.set(self.cp.options["restrictfilenames"])
+        self.debug_mode_value.set(self.cp.options["debug_printtraffic"])
 
         # -------------- LABEL --------------- #
         self.setting_lf = ttk.Labelframe(self, text="Setting", labelanchor=tk.N)
@@ -51,6 +56,7 @@ class AdvanceFrame(tk.Frame):
         self.quality_lb = ttk.Label(self.post_processor_lf, text="Preferred Quality")
         self.storage_lb = ttk.Label(self.setting_lf, text="Save file location")
         self.restricted_file_name_lb = ttk.Label(self.setting_lf, text="Restrict file name", anchor=tk.CENTER)
+        self.debug_mode_lb = ttk.Label(self.setting_lf, text="Debug Mode")
 
         # -------------- ENTRY --------------- #
         self.path_entry = ttk.Entry(self.setting_lf, textvariable=self.folder_path_value, state="readonly")
@@ -75,7 +81,10 @@ class AdvanceFrame(tk.Frame):
         # ------------- CHECKBOX ------------- #
         self.restricted_chb = ttk.Checkbutton(self.setting_lf,
                                               variable=self.restricted_value,
-                                              command=self.on_check_box)
+                                              command=lambda: self.on_check_box("restrict"))
+        self.debug_mode_chb = ttk.Checkbutton(self.setting_lf,
+                                              variable=self.debug_mode_value,
+                                              command=lambda: self.on_check_box("debug"))
 
         # -------------- BUTTON -------------- #
         self.brow_bt = ttk.Button(self.setting_lf, text="Brow...", command=self.on_select_folder)
@@ -101,6 +110,7 @@ class AdvanceFrame(tk.Frame):
         self.quality_lb.grid(row=1, column=0, padx=5, pady=5)
         self.storage_lb.grid(row=0, column=3, padx=5)
         self.restricted_file_name_lb.grid(row=1, column=3)
+        self.debug_mode_lb.grid(row=2, column=3)
 
         # -------------- ENTRY --------------- #
         self.path_entry.grid(row=0, column=4)
@@ -112,6 +122,7 @@ class AdvanceFrame(tk.Frame):
 
         # ------------- CHECKBOX ------------- #
         self.restricted_chb.grid(row=1, column=4, sticky=tk.W, padx=5)
+        self.debug_mode_chb.grid(row=2, column=4, sticky=tk.W, padx=5)
 
         # -------------- BUTTON -------------- #
         self.brow_bt.grid(row=0, column=5, padx=5)
@@ -131,12 +142,12 @@ class AdvanceFrame(tk.Frame):
         if name == "ext":
             self.cp.options["postprocessors"][0]["preferredcodec"] = self.extension_value.get()
 
-    def on_check_box(self):
+    def on_check_box(self, checkbox_id):
         """"""
-        if self.restricted_value.get() == 0:
-            self.cp.options["restrictfilenames"] = False
-        else:
-            self.cp.options["restrictfilenames"] = True
+        if checkbox_id == "restrict":
+            self.cp.options["restrictfilenames"] = self.restricted_value.get()
+        if checkbox_id == "debug":
+            self.cp.options["debug_printtraffic"] = self.debug_mode_value.get()
 
     def on_select_folder(self):
         """Open a dialog for user to choose a path"""
@@ -152,6 +163,30 @@ class AdvanceFrame(tk.Frame):
     def on_close(self):
         """Hide the frame"""
         self.grid_remove()
+
+# ======================================Debug Frame=================================================================== #
+
+
+class DebugFrame(tk.Frame):
+    """An extension frame contain debug screen"""
+    def __init__(self, original):
+        """Constructor"""
+        self.master = original
+        tk.Frame.__init__(self, self.master)
+
+        # -------------- LABEL --------------- #
+        self.debug_lf = ttk.Labelframe(self, text="Debug info")
+        self.debug_txt = scrolledtext.ScrolledText(self.debug_lf, height=25, width=55, state=tk.DISABLED)
+
+        self.frame_layout()
+
+    def frame_layout(self):
+        """Manager frame layout"""
+        # -------------- LABEL --------------- #
+        self.debug_lf.pack()
+        self.debug_txt.pack()
+
+# =====================================Main Window==================================================================== #
 
 
 class YoutubeDownloader(Observer):
@@ -172,6 +207,9 @@ class YoutubeDownloader(Observer):
         self.download_status_value = tk.StringVar()
         self.current_progress_value = tk.DoubleVar()
 
+        # -------------- STYLE --------------- #
+        self.style = PercentageLabel()
+
         # ------------ MENU BAR -------------- #
         self.menu = tk.Menu(self.root)
         self.root.config(menu=self.menu)
@@ -182,10 +220,11 @@ class YoutubeDownloader(Observer):
 
         # -------------- FRAME --------------- #
         self.main_frame = tk.Frame(self.root)
-        self.setting_frame = AdvanceFrame(self.root, self.core_process)
+        self.setting_frame = SettingFrame(self.root, self.core_process)
+        self.debug_frame = DebugFrame(self.root)
 
         # -------------- LABEL --------------- #
-        self.logo_title_lb = tk.Label(self.main_frame, text="A Python applicant")
+        self.logo_title_lb = ttk.Label(self.main_frame, text="A Python applicant")
         self.download_status_lb = ttk.Label(self.main_frame, textvariable=self.download_status_value)
 
         # -------------- TEXT ---------------- #
@@ -195,17 +234,18 @@ class YoutubeDownloader(Observer):
         # ----------- PROGRESSBAR ------------ #
         self.download_pb = ttk.Progressbar(self.main_frame,
                                            orient=tk.HORIZONTAL,
-                                           length=200,
+                                           length=300,
+                                           style="text.Horizontal.TProgressbar",
                                            variable=self.current_progress_value,
                                            mode="determinate")
 
         # -------------- ENTRY --------------- #
-        self.download_url_et = tk.Entry(self.main_frame,
-                                        textvariable=self.download_url_value,
-                                        width=30,
-                                        state=tk.DISABLED)
+        self.download_url_et = ttk.Entry(self.main_frame,
+                                         textvariable=self.download_url_value,
+                                         width=30,
+                                         state=tk.DISABLED)
         self.download_url_et.bind("<Return>", lambda event: self.on_click_download)
-        self.search_et = tk.Entry(self.main_frame, textvariable=self.keyword_value, width=30, state=tk.DISABLED)
+        self.search_et = ttk.Entry(self.main_frame, textvariable=self.keyword_value, width=30, state=tk.DISABLED)
         self.search_et.bind("<Return>", lambda event: self.on_click_download)
 
         # ----------- RADIO BUTTON ----------- #
@@ -239,7 +279,8 @@ class YoutubeDownloader(Observer):
     def window_layout(self):
         """Manage components layout of the window"""
         # -------------- FRAME --------------- #
-        self.main_frame.grid()
+        self.main_frame.grid(column=1)
+        self.add_debug_frame()
 
         # -------------- LABEL --------------- #
         self.logo_title_lb.grid(row=5, column=3)
@@ -307,11 +348,14 @@ class YoutubeDownloader(Observer):
         self.download_status_lb.grid(row=5, column=0, columnspan=2)
         downloading_thread.start()
 
-    def update(self, *args, **kwargs):
+    def download_status(self, *args, **kwargs):
         """Implement from Observer Class to get event info from download progress"""
         self.download_pb.config(maximum=args[0]["total_bytes"])
+        self.download_pb.step()
         self.current_progress_value.set(args[0]["downloaded_bytes"])
         self.download_status_value.set(args[0]["status"])
+        current_percent = int((args[0]["downloaded_bytes"]/args[0]["total_bytes"])*100)
+        self.style.configure('text.Horizontal.TProgressbar', text='{:g} %'.format(current_percent))
         if args[0]["downloaded_bytes"] == args[0]["total_bytes"]:
             completed_icon = tk.PhotoImage(file=resize_image("../images/Ok_check.png", 25, 25))
             self.download_indicate_icon.config(image=completed_icon)
@@ -319,6 +363,7 @@ class YoutubeDownloader(Observer):
             self.main_frame.after(1000, self.after_download)
 
     def after_download(self):
+        """"""
         self.download_pb.grid_remove()
 
     def on_click_download(self):
@@ -351,9 +396,35 @@ class YoutubeDownloader(Observer):
             self.search_et.config(state=tk.NORMAL)
             self.download_url_et.config(state=tk.DISABLED)
 
+    def add_debug_frame(self):
+        """Adjust DEBUG screen base on configuration setting"""
+        if self.core_process.options["debug_printtraffic"]:
+            self.debug_frame.grid(column=0)
+        else:
+            self.debug_frame.grid_remove()
+
+    def debug(self, *args, **kwargs):
+        """Set debug data output to screen"""
+        if self.core_process.options["debug_printtraffic"]:
+            self.debug_frame.debug_txt.config(state=tk.NORMAL)
+            self.debug_frame.debug_txt.delete(1.0, tk.END)
+            self.debug_frame.debug_txt.insert(tk.END, args[0])
+            self.debug_frame.debug_txt.config(state=tk.DISABLED)
+
+    def warning(self, *args, **kwargs):
+        """Get warning flag"""
+        messagebox.showwarning(message=args[0])
+
+    def error(self, *args, **kwargs):
+        """Show error while downloading"""
+        self.after_download()
+        title = args[0][:5]
+        msg = args[0][7:]
+        messagebox.showerror(title=title, message=msg)
+
     def on_open_setting(self):
         """Open an extension of setting frame"""
-        self.setting_frame.grid()
+        self.setting_frame.grid(column=1)
 
 
 def main():
@@ -364,3 +435,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# https://www.youtube.com/watch?v=a9I2Wwm11pg

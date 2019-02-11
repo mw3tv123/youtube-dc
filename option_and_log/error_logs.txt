@@ -5,95 +5,14 @@ DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
 DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
+DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 513
+DEBUG:PIL.PngImagePlugin:STREAM b'tRNS' 566 100
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 678 8702
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-ERROR:root:2019-01-21 09:37:36.180203 - Error: ERROR: Signature extraction failed: Traceback (most recent call last):
-  File "/home/tqhung1/.local/lib/python3.5/site-packages/youtube_dl/extractor/youtube.py", line 1226, in _decrypt_signature
-    video_id, player_url, s
-  File "/home/tqhung1/.local/lib/python3.5/site-packages/youtube_dl/extractor/youtube.py", line 1134, in _extract_signature_function
-    res = self._parse_sig_js(code)
-  File "/home/tqhung1/.local/lib/python3.5/site-packages/youtube_dl/extractor/youtube.py", line 1201, in _parse_sig_js
-    initial_function = jsi.extract_function(funcname)
-  File "/home/tqhung1/.local/lib/python3.5/site-packages/youtube_dl/jsinterp.py", line 245, in extract_function
-    raise ExtractorError('Could not find JS function %r' % funcname)
-youtube_dl.utils.ExtractorError: Could not find JS function 'encodeURIComponent'; please report this issue on https://yt-dl.org/bug . Make sure you are using the latest version; see  https://yt-dl.org/update  on how to update. Be sure to call youtube-dl with the --verbose flag and include its complete output.
- (caused by ExtractorError("Could not find JS function 'encodeURIComponent'; please report this issue on https://yt-dl.org/bug . Make sure you are using the latest version; see  https://yt-dl.org/update  on how to update. Be sure to call youtube-dl with the --verbose flag and include its complete output.",)); please report this issue on https://yt-dl.org/bug . Make sure you are using the latest version; see  https://yt-dl.org/update  on how to update. Be sure to call youtube-dl with the --verbose flag and include its complete output.
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-ERROR:root:2019-01-21 10:57:02.871516 - Error: ERROR: unable to download video data: HTTP Error 403: Forbidden
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
-DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
+DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 513
+DEBUG:PIL.PngImagePlugin:STREAM b'tRNS' 566 100
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 678 8702
+ERROR:root:2019-01-22 17:54:46.782587 - ERROR: audio conversion failed: [aac @ 0x1d2cbe0] The encoder 'aac' is experimental but experimental codecs are not enabled, add '-strict -2' if you want to use it.
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
@@ -108,6 +27,7 @@ DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
 DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 513
 DEBUG:PIL.PngImagePlugin:STREAM b'tRNS' 566 100
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 678 8702
+ERROR:root:2019-01-22 17:56:54.711497 - ERROR: audio conversion failed: [aac @ 0xe28be0] The encoder 'aac' is experimental but experimental codecs are not enabled, add '-strict -2' if you want to use it.
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
@@ -115,13 +35,11 @@ DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
 DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 513
-DEBUG:PIL.PngImagePlugin:STREAM b'tRNS' 566 100
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 678 8702
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 513
-DEBUG:PIL.PngImagePlugin:STREAM b'tRNS' 566 100
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 678 8702
+DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
+DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
@@ -129,24 +47,14 @@ DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
 DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 513
-DEBUG:PIL.PngImagePlugin:STREAM b'tRNS' 566 100
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 678 8702
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 513
-DEBUG:PIL.PngImagePlugin:STREAM b'tRNS' 566 100
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 678 8702
-DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
 DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
 DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 513
-DEBUG:PIL.PngImagePlugin:STREAM b'tRNS' 566 100
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 678 8702
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 41 7980
 DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
-DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 513
-DEBUG:PIL.PngImagePlugin:STREAM b'tRNS' 566 100
-DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 678 8702
+DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
+DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 59 8192

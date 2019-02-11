@@ -9,8 +9,7 @@ import json
 import youtube_dl
 import subprocess
 import time
-
-
+import platform
 
 from lib.observable import notify_observers
 
@@ -29,6 +28,8 @@ from lib.observable import notify_observers
         - logging           --> For save error information into a file for later analyse.
         - youtube-dl        --> For working with video clip in YouTube.
         - urllib            --> For working with search url.
+        - subprocess        --> For working with shell command.
+        - platform          --> For working in cross platform.
 '''
 '''
     => options <=
@@ -44,32 +45,34 @@ from lib.observable import notify_observers
 class LogHandler(object):
     """LogHandler handle messages for each case"""
 
-    def debug(self, msg):
-        pass
+    @staticmethod
+    def debug(msg):
+        notify_observers(msg, mode="debug")
 
-    def warning(self, msg):
-        pass
+    @staticmethod
+    def warning(msg):
+        notify_observers(msg, mode="warning")
 
     @staticmethod
     def error(msg):
-        print(msg)
-        logging.error('{0} - Error: {1}'.format(datetime.now(), msg))
+        notify_observers(msg, mode="error")
+        logging.error('{0} - {1}'.format(datetime.now(), msg))
 
 
 def progress_handler(progress_status):
     """Handler download status"""
-    notify_observers(progress_status)
+    notify_observers(progress_status, mode="update")
     time.sleep(0.2)
 
 
 class CoreProcess(object):
-    logging.basicConfig(filename='/home/tqhung1/Works/youtube-dc/option_and_log/error_logs.txt', level=logging.DEBUG)
-    default_storage_directory = "/home/tqhung1/Works/youtube-dc/my_audio/%(title)s.%(ext)s"
-    options_file_path = "/home/tqhung1/Works/youtube-dc/option_and_log/option_config.txt"
+    logging.basicConfig(filename='../option_and_log/error_logs.txt', level=logging.DEBUG)
+    default_storage_directory = "../my_audio/%(title)s.%(ext)s"
+    options_file_path = "../option_and_log/option_config.txt"
     options = {}
     status = {}
 
-    """Main process, handle amost everything."""
+    """Main process, handleamost everything."""
 
     def __init__(self, options=None, storage_directory=''):
         if storage_directory is True:
@@ -86,6 +89,7 @@ class CoreProcess(object):
                 }],
                 'outtmpl': self.default_storage_directory,
                 'restrictfilenames': True,
+                'debug_printtraffic': False,
                 'logger': LogHandler(),
                 'progress_hooks': [progress_handler],
             }
@@ -115,10 +119,10 @@ class CoreProcess(object):
                     if 'restrictfilenames' in data:
                         self.options['restrictfilenames'] = data['restrictfilenames']
                 except json.JSONDecodeError as e:
-                    logging.error('{0} - Encountered error: {1}'.format(datetime.now(), e))
+                    logging.error('{0} - {1}'.format(datetime.now(), e))
 
     def save_setting(self):
-        """"""
+        """Save configuration setting to a json file"""
         data = {}
         for k, v in self.options.items():
             if isinstance(v, LogHandler):
@@ -130,7 +134,7 @@ class CoreProcess(object):
             try:
                 json.dump(data, file)
             except TypeError as e:
-                logging.error("{0} - Encountered error: {1}".format(datetime.now(), e))
+                logging.error("{0} - {1}".format(datetime.now(), e))
 
     @staticmethod
     def search_by_keywords(keyword=''):
@@ -161,18 +165,23 @@ class CoreProcess(object):
                     for element in url:
                         ydl.download([element])
         except HTTPError as e:
-            logging.error("{0} - Encountered error: {1}".format(datetime.now(), e))
+            logging.error("{0} - {1}".format(datetime.now(), e))
 
     def open_storage_file(self):
         """
         Open a files manager with an absolute path.
+
         :return: True and open Files Manager with specific path or False if file doesn't exist or wrong path.
         """
         path = self.get_absolute_path(self.options['outtmpl'])
         try:
-            subprocess.call("nautilus -w " + path, stderr=subprocess.DEVNULL, shell=True)
+            if platform.system() == "Linux":
+                subprocess.call("nautilus -w " + path, stderr=subprocess.DEVNULL, shell=True)
+            if platform.system() == "Windows":
+                subprocess.call("start " + path, stderr=subprocess.DEVNULL, shell=True)
             return True
-        except OSError:
+        except OSError as e:
+            logging.error("{0} - {1}".format(datetime.now(), e))
             return False
 
     @staticmethod
