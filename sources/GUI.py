@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
@@ -6,7 +7,13 @@ from tkinter import scrolledtext
 from PIL import Image
 import threading
 
-from sources.coreprocess import CoreProcess
+try:
+    import coreprocess
+except ImportError:
+    from coreprocess import CoreProcess
+else:
+    pass
+
 from lib.ToolTip import Tooltip
 from lib.ProgressInlineLabel import PercentageLabel
 from lib.observable import register, unregister
@@ -43,7 +50,7 @@ class SettingFrame(tk.Frame):
         self.debug_mode_value = tk.BooleanVar()
         self.format_value.set(self.get_format_setting())
         self.extension_value.set(self.cp.options["postprocessors"][0]["preferredcodec"])
-        self.folder_path_value.set(self.cp.get_absolute_path(self.cp.options["outtmpl"]))
+        self.folder_path_value.set(self.cp.options["outtmpl"])
         self.quality_value.set("192")
         self.restricted_value.set(self.cp.options["restrictfilenames"])
         self.debug_mode_value.set(self.cp.options["debug_printtraffic"])

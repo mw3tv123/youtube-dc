@@ -4,12 +4,13 @@ from urllib.parse import quote
 from urllib import request
 from urllib3.exceptions import HTTPError
 from bs4 import BeautifulSoup
-import logging
+import os
+import time
 import json
+import logging
+import platform
 import youtube_dl
 import subprocess
-import time
-import platform
 
 from lib.observable import notify_observers
 
@@ -66,15 +67,15 @@ def progress_handler(progress_status):
 
 
 class CoreProcess(object):
-    logging.basicConfig(filename='../option_and_log/error_logs.txt', level=logging.DEBUG)
-    default_storage_directory = "../my_audio/%(title)s.%(ext)s"
-    options_file_path = "../option_and_log/option_config.txt"
-    options = {}
-    status = {}
+    """Main process, handle amost everything."""
+    def __init__(self, options=None, storage_directory=""):
+        """Constructor"""
+        logging.basicConfig(filename="../option_and_log/error_logs.txt", level=logging.DEBUG)
+        self.default_storage_directory = self.get_absolute_path("my_audio")
+        file_sample = "%(title)s.%(ext)s"
+        self.options_file_path = self.get_absolute_path("option_config.txt")
+        self.status = {}
 
-    """Main process, handleamost everything."""
-
-    def __init__(self, options=None, storage_directory=''):
         if storage_directory is True:
             self.default_storage_directory = storage_directory
         if options is not None:
@@ -87,7 +88,7 @@ class CoreProcess(object):
                     'preferredcodec': 'mp3',
                     'preferredquality': '192',
                 }],
-                'outtmpl': self.default_storage_directory,
+                'outtmpl': self.default_storage_directory + "/" + file_sample,
                 'restrictfilenames': True,
                 'debug_printtraffic': False,
                 'logger': LogHandler(),
@@ -173,7 +174,7 @@ class CoreProcess(object):
 
         :return: True and open Files Manager with specific path or False if file doesn't exist or wrong path.
         """
-        path = self.get_absolute_path(self.options['outtmpl'])
+        path = self.default_storage_directory
         try:
             if platform.system() == "Linux":
                 subprocess.call("nautilus -w " + path, stderr=subprocess.DEVNULL, shell=True)
@@ -187,15 +188,13 @@ class CoreProcess(object):
     @staticmethod
     def get_absolute_path(path):
         """Get the absolute path from a relative path or a template path"""
-        relate_path = False
-        if path.startswith(".") or path.startswith(".."):
-            relate_path = True
-        temp_path = path.split("/")
-        path = ""
-        for i in range(len(temp_path) - 1):
-            if temp_path[i] == "." or temp_path[i] == ".." or temp_path[i] == "":
-                continue
-            path += "/" + temp_path[i]
-        if relate_path is True:
-            path = subprocess.check_output("pwd").decode("utf-8").replace("\n", "") + path
-        return path
+        root = os.path.dirname(os.getcwd())
+        for root_dir, dirs, files in os.walk(root):
+            if path in files or path in dirs:
+                return os.path.join(root_dir, path)
+
+
+# Test
+if __name__ == "__main__":
+    print(CoreProcess.get_absolute_path("option_config.txt"))
+    print(CoreProcess.get_absolute_path("my_audio"))
