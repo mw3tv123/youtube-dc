@@ -4,6 +4,7 @@ from urllib.parse import quote
 from urllib import request
 from urllib3.exceptions import HTTPError
 from bs4 import BeautifulSoup
+from PIL import Image
 import os
 import time
 import json
@@ -12,8 +13,10 @@ import platform
 import youtube_dl
 import subprocess
 
-from lib.observable import notify_observers
-
+try:
+    from lib.observable import notify_observers
+except ImportError:
+    from .observable import notify_observers
 '''
     This Python script enable user to download a YouTube video back to our computer and
     convert it to any format. This is a tiny project for learning new thing from Python.
@@ -48,7 +51,7 @@ class LogHandler(object):
 
     @staticmethod
     def debug(msg):
-        notify_observers(msg, mode="debug")
+        logging.debug(''.format(datetime.now(), msg))
 
     @staticmethod
     def warning(msg):
@@ -70,7 +73,7 @@ class CoreProcess(object):
     """Main process, handle amost everything."""
     def __init__(self, options=None, storage_directory=""):
         """Constructor"""
-        logging.basicConfig(filename="../option_and_log/error_logs.txt", level=logging.DEBUG)
+        logging.basicConfig(filename="option_and_log/error_logs.txt", level=logging.DEBUG)
         self.default_storage_directory = self.get_absolute_path("my_audio")
         file_sample = "%(title)s.%(ext)s"
         self.options_file_path = self.get_absolute_path("option_config.txt")
@@ -120,7 +123,7 @@ class CoreProcess(object):
                     if 'restrictfilenames' in data:
                         self.options['restrictfilenames'] = data['restrictfilenames']
                 except json.JSONDecodeError as e:
-                    logging.error('{0} - {1}'.format(datetime.now(), e))
+                    self.store_log('{0} - {1}'.format(datetime.now(), e))
 
     def save_setting(self):
         """Save configuration setting to a json file"""
@@ -135,7 +138,7 @@ class CoreProcess(object):
             try:
                 json.dump(data, file)
             except TypeError as e:
-                logging.error("{0} - {1}".format(datetime.now(), e))
+                self.store_log("{0} - {1}".format(datetime.now(), e))
 
     @staticmethod
     def search_by_keywords(keyword=''):
@@ -166,7 +169,7 @@ class CoreProcess(object):
                     for element in url:
                         ydl.download([element])
         except HTTPError as e:
-            logging.error("{0} - {1}".format(datetime.now(), e))
+            self.store_log("{0} - {1}".format(datetime.now(), e))
 
     def open_storage_file(self):
         """
@@ -182,16 +185,39 @@ class CoreProcess(object):
                 subprocess.call("start " + path, stderr=subprocess.DEVNULL, shell=True)
             return True
         except OSError as e:
-            logging.error("{0} - {1}".format(datetime.now(), e))
+            self.store_log("{0} - {1}".format(datetime.now(), e))
             return False
 
     @staticmethod
-    def get_absolute_path(path):
-        """Get the absolute path from a relative path or a template path"""
-        root = os.path.dirname(os.getcwd())
-        for root_dir, dirs, files in os.walk(root):
-            if path in files or path in dirs:
-                return os.path.join(root_dir, path)
+    def get_absolute_path(name):
+        """Get file's absolute path"""
+        path = ""
+        root_dir = os.getcwd()
+        if "youtube-dc" in root_dir:
+            while not root_dir.endswith("youtube-dc"):
+                root_dir = os.path.dirname(root_dir)
+            for root, dirs, files in os.walk(root_dir):
+                if name in files or name in dirs:
+                    path = os.path.join(root, name)
+        else:
+            CoreProcess.store_log("{} - Not in root directory! Please run in root directory!".format(datetime.now()))
+        return path
+
+    @staticmethod
+    def resize_image(name, width, height):
+        """Resize image"""
+        path = CoreProcess.get_absolute_path(name)
+        temp_path = path.split("/")
+        name, extension = temp_path[len(temp_path)-1].split(".")
+        image = Image.open(path)
+        image = image.resize((width, height), Image.ANTIALIAS)
+        path = os.path.join(os.path.dirname(path), "_" + name + "." + extension)
+        image.save(path, extension)
+        return path
+
+    @staticmethod
+    def store_log(msg):
+        logging.error(msg)
 
 
 # Test

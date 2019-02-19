@@ -16,10 +16,6 @@ def notify_observers(*args, **kwargs):
         for observer in observers:
             observer.download_status(*args, **kwargs)
 
-    if kwargs["mode"] == "debug":
-        for observer in observers:
-            observer.debug(*args, **kwargs)
-
     if kwargs["mode"] == "warning":
         for observer in observers:
             observer.warning(*args, **kwargs)

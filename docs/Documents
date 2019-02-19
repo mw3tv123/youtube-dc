@@ -1,13 +1,13 @@
 # Day started: 24/12/2018
-# Version 0.1.10
+# Version 0.1.51 (15/02/2019)
 # Author: HUNG TRAN QUOC
 
-==> Currently support: Linux-like OS
+==> Currently support: Linux-like OS, Windows
 
 1) Introduction:
-- This is a small project create for my own purpose while learning thing from Python and its modules.
-- All modules in here can be find below.
-- This project (YouTube Downloader/Converter App) intend to search and download YouTube videos from and applicant;
+- This is a small project create for my own purpose while learning thing from Python and its modules;
+- All modules in here can be found below;
+- This project (YouTube Downloader/Converter App) intend to search and download YouTube videos from an applicant.
 
 2) Requirement:
 - Python 3.x
@@ -23,8 +23,10 @@
 
 # -----  Side/Optional modules  ----- #
   (For getting additional information)
-- datetime
+- datetime              -   For debugging purpose;
 - __future__
+- threading             -   For updating progressbar;
+- ToolTips              -   For adding Tool tip to Tkinter;
 
 3) Usage:
 # Commandline - Interface:
@@ -38,4 +40,5 @@ $ python3 CLI.py
 -k, --keyword=<string>          A string of keywords want to search.
 
 # Graphic User Interface:
+    Go to youtube-dc directory and enter following command:
 $ python3 GUI.py
