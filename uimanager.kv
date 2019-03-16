@@ -1,0 +1,61 @@
+#: kivy 1.0.9
+
+# Main Screen/Landing Screen class
+<MainScreen>:
+    FloatLayout:
+        # Title
+        Label:
+            text: 'Enter keywords to search\nOr URL to download mp3'
+            size_hint: 0.7, 0.1
+            pos_hint: {'center_x': 0.5, 'center_y': 0.6}
+
+        # Data receiver
+        TextInput:
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            size_hint: 0.75, 0.05
+            multiline: False
+            on_text_validate: root.change_screen(app.root, self.text)
+
+        # Alternative to the Detail Screen
+        Button:
+            text: 'Download/Search'
+            size_hint: 0.2, 0.05
+            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+            font_size: 20
+            on_press: root.change_screen(app.root)
+
+# Detail Screen
+<DetailScreen>:
+    FloatLayout:
+        # Test purpose
+        Label:
+            id: input_text
+            size_hint: 0.2, 0.1
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            text: ''
+
+        # Test purpose
+        Button:
+            text: 'To Main'
+            font_size: 20
+            size_hint: 0.2, 0.05
+            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+            on_press:
+                app.root.transition.direction = 'right'
+                app.root.current = 'Main_Screen'
+
+# Screen Manager use as root
+ScreenControl:
+    id: screen_manager
+    mainScreen: main_screen
+    detailScreen: detail_screen
+
+    MainScreen:
+        id: main_screen
+        name: 'Main_Screen'
+        manager: 'screen_manager'
+
+    DetailScreen:
+        id: detail_screen
+        name: 'Detail_Screen'
+        manager: 'screen_manager'

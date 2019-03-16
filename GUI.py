@@ -41,7 +41,7 @@ class MainFrame(ttk.Frame, Observer):
         ttk.Frame.__init__(self, self.master)
 
         # ------------ VARIABLES ------------- #
-        option_choose = tk.BooleanVar()
+        # option_choose = tk.BooleanVar()
         self.download_url_value = tk.StringVar()
         self.keyword_value = tk.StringVar()
         self.download_status_value = tk.StringVar()
@@ -54,9 +54,9 @@ class MainFrame(ttk.Frame, Observer):
         self.logo_title_lb = ttk.Label(self, text="A Python applicant")
         self.download_status_lb = ttk.Label(self, textvariable=self.download_status_value)
 
-        # -------------- TEXT ---------------- #
-        self.result_lf = ttk.Labelframe(self, text="Result")
-        self.result_txt = scrolledtext.ScrolledText(self.result_lf, height=25, width=55, state=tk.DISABLED)
+        # # -------------- TEXT ---------------- #
+        # self.result_lf = ttk.Labelframe(self, text="Result")
+        # self.result_txt = scrolledtext.ScrolledText(self.result_lf, height=25, width=55, state=tk.DISABLED)
 
         # ----------- PROGRESSBAR ------------ #
         self.download_pb = ttk.Progressbar(self,
@@ -69,30 +69,30 @@ class MainFrame(ttk.Frame, Observer):
         # -------------- ENTRY --------------- #
         self.download_url_et = ttk.Entry(self,
                                          textvariable=self.download_url_value,
-                                         width=30,
-                                         state=DISABLED)
+                                         width=30)
         self.download_url_et.bind("<Return>", lambda event: self.on_click_download)
-        self.search_et = ttk.Entry(self, textvariable=self.keyword_value, width=30, state=DISABLED)
-        self.search_et.bind("<Return>", lambda event: self.on_click_download)
+        # self.search_et = ttk.Entry(self, textvariable=self.keyword_value, width=30, state=DISABLED)
+        # self.search_et.bind("<Return>", lambda event: self.on_click_download)
 
-        # ----------- RADIO BUTTON ----------- #
-        self.option1_rb = tk.Radiobutton(self,
-                                         text="Download from URL",
-                                         command=lambda: self.on_change_option(self.option1_rb),
-                                         variable=option_choose,
-                                         value=0)
-        self.option2_rb = tk.Radiobutton(self,
-                                         text="Search YouTube",
-                                         command=lambda: self.on_change_option(self.option2_rb),
-                                         variable=option_choose,
-                                         value=1)
+        # # ----------- RADIO BUTTON ----------- #
+        # self.option1_rb = tk.Radiobutton(self,
+        #                                  text="Download from URL",
+        #                                  command=lambda: self.on_change_option(self.option1_rb),
+        #                                  variable=option_choose,
+        #                                  value=0)
+        # self.option2_rb = tk.Radiobutton(self,
+        #                                  text="Search YouTube",
+        #                                  command=lambda: self.on_change_option(self.option2_rb),
+        #                                  variable=option_choose,
+        #                                  value=1)
 
         # -------------- BUTTON -------------- #
         self.open_file_location_bt = ttk.Button(self, text="Open download folder", command=self.on_open_file)
-        self.search_and_download_bt = ttk.Button(self, text="Download/Search", command=self.on_click_download)
+        self.search_bt = ttk.Button(self, text="Download/Search", command=self.on_click_download)
+        self.download_bt = ttk.Button(self, text="Download/Search", command=self.on_click_download)
 
         # -------------- IMAGE --------------- #
-        download_icon = tk.PhotoImage(file=self.cp.resize_image("Spinner.gif", 30, 30))
+        download_icon = tk.PhotoImage(file=self.cp.resize_image("Spinner.gif", 10, 10))
         self.download_indicate_icon = ttk.Label(self, image=download_icon)
         self.download_indicate_icon.photo = download_icon
 
@@ -101,20 +101,20 @@ class MainFrame(ttk.Frame, Observer):
     def frame_layout(self):
         """Manage components layout of the window"""
         # -------------- ENTRY --------------- #
-        self.download_url_et.grid(row=1, column=1)
-        self.search_et.grid(row=2, column=1)
+        self.download_url_et.grid(row=0, column=0, columnspan=2, padx=50, pady=50, sticky=NSEW)
+        # self.search_et.grid(row=1, column=1)
 
-        # ----------- RADIO BUTTON ----------- #
-        self.option1_rb.grid(row=1, column=0, sticky=W, padx=10, pady=5)
-        self.option2_rb.grid(row=2, column=0, sticky=W, padx=10, pady=5)
+        # # ----------- RADIO BUTTON ----------- #
+        # self.option1_rb.grid(row=0, column=0, sticky=W, padx=10, pady=5)
+        # self.option2_rb.grid(row=2, column=0, sticky=W, padx=10, pady=5)
 
-        # -------------- TEXT ---------------- #
-        self.result_lf.grid(row=6, column=0, rowspan=10, columnspan=3)
-        self.result_txt.pack()
+        # # -------------- TEXT ---------------- #
+        # self.result_lf.grid(row=6, column=0, rowspan=10, columnspan=3)
+        # self.result_txt.pack()
 
         # -------------- BUTTON -------------- #
-        self.search_and_download_bt.grid(row=1, column=3, sticky=NSEW)
-        self.open_file_location_bt.grid(row=2, column=3, sticky=NSEW)
+        self.search_and_download_bt.grid(row=1, column=0, padx=20, pady=20, sticky=NSEW)
+        self.open_file_location_bt.grid(row=1, column=1, padx=20, pady=20, sticky=NSEW)
 
     def on_open_file(self):
         """Attempt to open a file path contains audio files"""
@@ -175,12 +175,12 @@ class MainFrame(ttk.Frame, Observer):
                 messagebox.showerror(title=title, message=error_msg)
                 return
             self._start_download_progress(url)
-        elif "normal" in self.search_et.config()["state"] and self.keyword_value.get():
-            result = self.cp.search_by_keywords(self.keyword_value.get())
-            self.result_txt.config(state=NORMAL)
-            self.result_txt.delete(1.0, END)
-            for var in result:
-                self.result_txt.insert(END, var + "\n")
+        # elif "normal" in self.search_et.config()["state"] and self.keyword_value.get():
+        #     result = self.cp.search_by_keywords(self.keyword_value.get())
+            # self.result_txt.config(state=NORMAL)
+            # self.result_txt.delete(1.0, END)
+            # for var in result:
+            #     self.result_txt.insert(END, var + "\n")
         else:
             title = "No data input"
             warning_msg = "You haven't enter neither URL nor keywords yet. Enter it please!"
@@ -190,9 +190,9 @@ class MainFrame(ttk.Frame, Observer):
         """Automate disabled Entry widget referent to the radio option user choose"""
         if radio_button["text"].startswith("Download"):
             self.download_url_et.config(state=NORMAL)
-            self.search_et.config(state=DISABLED)
+            # self.search_et.config(state=DISABLED)
         if radio_button["text"].startswith("Search"):
-            self.search_et.config(state=NORMAL)
+            # self.search_et.config(state=NORMAL)
             self.download_url_et.config(state=DISABLED)
 
     def warning(self, *args, **kwargs):
@@ -359,23 +359,22 @@ class YoutubeDownloader(object):
         self.style = ttk.Style()
         self.set_app_style()
 
-        # ------------ MENU BAR -------------- #
-        self.menu = tk.Menu(self.root)
-        self.root.config(menu=self.menu)
-        menu_bar = tk.Menu(self.menu)
-        self.menu.add_cascade(label="Options", menu=menu_bar)
-        menu_bar.add_command(label="About", command=self.about)
-        menu_bar.add_command(label="Exit", command=self.on_exit)
+        # # ------------ MENU BAR -------------- #
+        # self.menu = tk.Menu(self.root)
+        # self.root.config(menu=self.menu)
+        # menu_bar = tk.Menu(self.menu)
+        # self.menu.add_cascade(label="Files", menu=menu_bar)
+        # self.menu.add_cascade(label="Setting", menu=menu_bar)
+        # menu_bar.add_command(label="About", command=self.about)
+        # menu_bar.add_command(label="Exit", command=self.on_exit)
 
         # -------------- FRAME --------------- #
         self.window_frame = ttk.Frame(self.root)
         self.tab_nb = ttk.Notebook(self.window_frame)
         self.main_frame = MainFrame(self.tab_nb, self.core_process)
-        self.setting_frame = SettingFrame(self.tab_nb, self.core_process)
+        # self.setting_frame = SettingFrame(self.tab_nb, self.core_process)
         self.tab_nb.add(self.main_frame, text="Main")
-        self.tab_nb.add(self.setting_frame, text="Setting")
-        self.tab_nb.hide(self.setting_frame)
-        self.tab_nb.hide(self.main_frame)
+        # self.tab_nb.add(self.setting_frame, text="Setting")
 
         # -------------- LABEL --------------- #
         self.logo_title_lb = ttk.Label(self.window_frame, text="A Python applicant")
@@ -425,22 +424,24 @@ class YoutubeDownloader(object):
             "Horizontal.TProgressbar": {"configure": {"background": MID_GREY}}
         })
         self.style.theme_use("st_app")
+        self.style.layout("TNotebook.Tab", [])
 
     def window_layout(self):
         """Manage components layout of the window"""
         # -------------- FRAME --------------- #
         self.window_frame.pack()
-        self.tab_nb.grid(row=0, column=1, rowspan=15)
+        self.tab_nb.pack()
+        # self.tab_nb.grid(row=0, column=1, rowspan=15)
 
-        # -------------- LABEL --------------- #
-        self.logo_title_lb.grid(row=1, column=0)
-
-        # -------------- IMAGE --------------- #
-        self.logo_icon.grid(row=0, column=0, padx=15, pady=15)
-
-        # -------------- BUTTON -------------- #
-        self.main_bt.grid(row=2, column=0, sticky=NSEW)
-        self.setting_bt.grid(row=3, column=0, sticky=NSEW)
+        # # -------------- LABEL --------------- #
+        # self.logo_title_lb.grid(row=1, column=0)
+        #
+        # # -------------- IMAGE --------------- #
+        # self.logo_icon.grid(row=0, column=0, padx=15, pady=15)
+        #
+        # # -------------- BUTTON -------------- #
+        # self.main_bt.grid(row=2, column=0, sticky=NSEW)
+        # self.setting_bt.grid(row=3, column=0, sticky=NSEW)
 
     @staticmethod
     def about():
@@ -450,10 +451,11 @@ class YoutubeDownloader(object):
         messagebox.showinfo(title=title, message=info_msg)
 
     def switch_tab(self, clicked_button):
+        """Use button to switch class instead of tab header for design purpose"""
         if clicked_button == "main":
             # self.tab_nb.add(self.main_frame)
             self.tab_nb.select(0)
-            self.tab_nb.hide(self.setting_frame)
+            # self.tab_nb.hide(self.setting_frame)
         else:
             # self.tab_nb.add(self.setting_frame)
             self.tab_nb.select(1)
