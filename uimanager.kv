@@ -2,6 +2,7 @@
 
 # Main Screen/Landing Screen class
 <MainScreen>:
+    on_pre_enter: self.clear_cache()
     FloatLayout:
         # Title
         Label:
@@ -11,6 +12,7 @@
 
         # Data receiver
         TextInput:
+            id: data_text
             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
             size_hint: 0.75, 0.05
             multiline: False
@@ -26,10 +28,11 @@
 
 # Detail Screen
 <DetailScreen>:
+    on_pre_enter: app.root.update()
     FloatLayout:
         # Test purpose
         Label:
-            id: input_text
+            id: result_text
             size_hint: 0.2, 0.1
             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
             text: ''
