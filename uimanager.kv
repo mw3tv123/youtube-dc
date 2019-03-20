@@ -1,41 +1,89 @@
-#: kivy 1.0.9
+#:kivy 1.0.9
+#:import MDIconButton kivymd.button.MDIconButton
+
+# Base Button for set size and transparent effect
+<MyBaseButton@MDIconButton>:
+    background_color: 0, 0, 0, 0
+    size_hint: 0.1, 0.05
+
+# Setting Button class
+<SettingButton@MyBaseButton>:
+    pos_hint: {'x': 0.8, 'y': 0.85}
+    on_press:
+        app.root.transition.direction = 'right'
+        app.root.current = 'Setting_Screen'
+
+# Home Button class
+<HomeButton@MyBaseButton>:
+    pos_hint: {'x': 0.4, 'y': 0.85}
+    on_press:
+        app.root.transition.direction = 'left'
+        app.root.current = 'Main_Screen'
+
+# Back Button class
+<BackButton@MyBaseButton>:
+    pos_hint: {'x': 0.1, 'y': 0.85}
+    on_press:
+        app.root.transition.direction = 'left'
+        app.root.current = app.root.previous()
 
 # Main Screen/Landing Screen class
 <MainScreen>:
+    # Set background image
+    canvas:
+        Rectangle:
+            source: 'images/background.jpg'
+            size: root.size
     on_pre_enter: self.clear_cache()
+
     FloatLayout:
+        SettingButton:
+
         # Title
         Label:
             text: 'Enter keywords to search\nOr URL to download mp3'
             size_hint: 0.7, 0.1
             pos_hint: {'center_x': 0.5, 'center_y': 0.6}
+            valign: 'middle'
 
         # Data receiver
         TextInput:
             id: data_text
+            size_hint: 0.8, 0.05
             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            size_hint: 0.75, 0.05
             multiline: False
-            on_text_validate: root.change_screen(app.root, self.text)
+            on_text_validate:
+                root.get_user_data(app.root)
 
         # Alternative to the Detail Screen
         Button:
             text: 'Download/Search'
+            font_size: 20
             size_hint: 0.2, 0.05
             pos_hint: {'center_x': 0.5, 'center_y': 0.4}
-            font_size: 20
-            on_press: root.change_screen(app.root)
+            on_press: root.get_user_data(app.root)
 
-# Detail Screen
-<DetailScreen>:
-    on_pre_enter: app.root.update()
+# Search Screen
+<SearchScreen>:
+    # Set background image
+    canvas:
+        Rectangle:
+            source: 'images/background.jpg'
+            size: root.size
+    on_pre_enter: app.root.transfer_data()
+
     FloatLayout:
-        # Test purpose
-        Label:
-            id: result_text
-            size_hint: 0.2, 0.1
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            text: ''
+        BackButton:
+
+        HomeButton:
+
+        SettingButton:
+
+        # Combine ScrollView with MDList for better list view
+        ScrollView:
+            do_scrool_x: False
+            MDList:
+                id: result_list
 
         # Test purpose
         Button:
@@ -47,18 +95,58 @@
                 app.root.transition.direction = 'right'
                 app.root.current = 'Main_Screen'
 
+
+# Download Screen
+<DownloadScreen>:
+    # Set background image
+    canvas:
+        Rectangle:
+            source: 'images/background.jpg'
+            size: root.size
+    on_pre_enter: app.root.transfer_data()
+
+    BackButton:
+
+    HomeButton:
+
+    SettingButton:
+
+# Setting Screen
+<SettingScreen>:
+    # Set background image
+    canvas:
+        Rectangle:
+            source: 'images/background.jpg'
+            size: root.size
+
+    BackButton:
+
+    HomeButton:
+
 # Screen Manager use as root
 ScreenControl:
     id: screen_manager
     mainScreen: main_screen
-    detailScreen: detail_screen
+    searchScreen: search_screen
+    downloadScreen: download_screen
+    settingScreen: setting_screen
 
     MainScreen:
         id: main_screen
         name: 'Main_Screen'
         manager: 'screen_manager'
 
-    DetailScreen:
-        id: detail_screen
-        name: 'Detail_Screen'
+    SearchScreen:
+        id: search_screen
+        name: 'Search_Screen'
+        manager: 'screen_manager'
+
+    DownloadScreen:
+        id: download_screen
+        name: 'Download_Screen'
+        manager: 'screen_manager'
+
+    SettingScreen:
+        id: setting_screen
+        name: 'Setting_Screen'
         manager: 'screen_manager'
