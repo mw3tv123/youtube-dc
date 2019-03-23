@@ -5,6 +5,7 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.core.window import Window
 
 from kivymd.button import MDIconButton
 from kivymd.list import OneLineListItem
@@ -121,6 +122,7 @@ buildKV = Builder.load_file("uimanager.kv")
 class MyApp(App):
     """Dummy class for running app"""
     def build(self):
+        Window.size = (360, 640)
         return buildKV
 
 

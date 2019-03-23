@@ -1,5 +1,6 @@
 #:kivy 1.0.9
 #:import MDIconButton kivymd.button.MDIconButton
+#:import MDRaisedButton kivymd.button.MDRaisedButton
 
 # Base Button for set size and transparent effect
 <MyBaseButton@MDIconButton>:
@@ -8,21 +9,21 @@
 
 # Setting Button class
 <SettingButton@MyBaseButton>:
-    pos_hint: {'x': 0.8, 'y': 0.85}
+    pos_hint: {'x': 0.8, 'y': 0.9}
     on_press:
         app.root.transition.direction = 'right'
         app.root.current = 'Setting_Screen'
 
 # Home Button class
 <HomeButton@MyBaseButton>:
-    pos_hint: {'x': 0.4, 'y': 0.85}
+    pos_hint: {'x': 0.4, 'y': 0.9}
     on_press:
         app.root.transition.direction = 'left'
         app.root.current = 'Main_Screen'
 
 # Back Button class
 <BackButton@MyBaseButton>:
-    pos_hint: {'x': 0.1, 'y': 0.85}
+    pos_hint: {'x': 0.1, 'y': 0.9}
     on_press:
         app.root.transition.direction = 'left'
         app.root.current = app.root.previous()
@@ -41,7 +42,7 @@
 
         # Title
         Label:
-            text: 'Enter keywords to search\nOr URL to download mp3'
+            text: 'URL OR KEYWORD:'
             size_hint: 0.7, 0.1
             pos_hint: {'center_x': 0.5, 'center_y': 0.6}
             valign: 'middle'
@@ -57,9 +58,8 @@
 
         # Alternative to the Detail Screen
         Button:
-            text: 'Download/Search'
-            font_size: 20
-            size_hint: 0.2, 0.05
+            text: 'SEARCH'
+            size_hint: None, 0.05
             pos_hint: {'center_x': 0.5, 'center_y': 0.4}
             on_press: root.get_user_data(app.root)
 
@@ -81,20 +81,10 @@
 
         # Combine ScrollView with MDList for better list view
         ScrollView:
+            pos_hint: {'x': 0, 'top': 0.85}
             do_scrool_x: False
             MDList:
                 id: result_list
-
-        # Test purpose
-        Button:
-            text: 'To Main'
-            font_size: 20
-            size_hint: 0.2, 0.05
-            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
-            on_press:
-                app.root.transition.direction = 'right'
-                app.root.current = 'Main_Screen'
-
 
 # Download Screen
 <DownloadScreen>:
