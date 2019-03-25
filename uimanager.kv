@@ -5,28 +5,31 @@
 # Base Button for set size and transparent effect
 <MyBaseButton@MDIconButton>:
     background_color: 0, 0, 0, 0
-    size_hint: 0.1, 0.05
+    size_hint: None, 0.05
+
+# Back Button class
+<BackButton@MyBaseButton>:
+    pos_hint: {'x': 0.05, 'y': 0.9}
+    on_press:
+        temp = app.root.previousScreen
+        app.root.previousScreen = app.root.current
+        app.root.transition.direction = 'left'
+        app.root.current = temp
+
+# Home Button class
+<HomeButton@MyBaseButton>:
+    pos_hint: {'x': 0.45, 'y': 0.9}
+    on_press:
+        app.root.transition.direction = 'left'
+        app.root.current = 'Main_Screen'
 
 # Setting Button class
 <SettingButton@MyBaseButton>:
     pos_hint: {'x': 0.8, 'y': 0.9}
     on_press:
+        app.root.previousScreen = app.root.current
         app.root.transition.direction = 'right'
         app.root.current = 'Setting_Screen'
-
-# Home Button class
-<HomeButton@MyBaseButton>:
-    pos_hint: {'x': 0.4, 'y': 0.9}
-    on_press:
-        app.root.transition.direction = 'left'
-        app.root.current = 'Main_Screen'
-
-# Back Button class
-<BackButton@MyBaseButton>:
-    pos_hint: {'x': 0.1, 'y': 0.9}
-    on_press:
-        app.root.transition.direction = 'left'
-        app.root.current = app.root.previous()
 
 # Main Screen/Landing Screen class
 <MainScreen>:
@@ -82,7 +85,7 @@
         # Combine ScrollView with MDList for better list view
         ScrollView:
             pos_hint: {'x': 0, 'top': 0.85}
-            do_scrool_x: False
+            do_scroll_x: False
             MDList:
                 id: result_list
 

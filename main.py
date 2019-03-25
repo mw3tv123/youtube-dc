@@ -2,13 +2,18 @@
 # |      imports      |
 # '-------------------'
 from kivy.app import App
+from kivy.core.window import Window
 from kivy.lang import Builder
+from kivy.metrics import dp
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.core.window import Window
+from kivy.uix.image import AsyncImage
 
 from kivymd.button import MDIconButton
-from kivymd.list import OneLineListItem
+from kivymd.dialog import MDDialog
+from kivymd.label import MDLabel
+from kivymd.list import TwoLineAvatarIconListItem, ILeftBodyTouch
+from kivymd.theming import ThemeManager
 
 from lib.coreprocess import CoreProcess
 
@@ -38,6 +43,11 @@ class BackButton(MyBaseButton):
 # --->>>    End of dummy button class   <<<--- #
 
 
+class VideoThumbnail(ILeftBodyTouch, AsyncImage):
+    """Video Thumbnail on the left"""
+    pass
+
+
 # --->>>    Main    <<<--- #
 class MainScreen(Screen):
     """
@@ -48,15 +58,34 @@ class MainScreen(Screen):
 
     def get_user_data(self, root):
         """Base on user to determine which screen next"""
-        self.user_input = self.ids.data_text.text
-        if self.user_input.startswith(('https', 'http')):
-            next_screen = 'Download_Screen'
+        if self.ids.data_text.text:
+            self.user_input = self.ids.data_text.text
+            
+            if self.user_input.startswith(('https', 'http')):
+                next_screen = 'Download_Screen'
+            else:
+                next_screen = 'Search_Screen'
+            self.change_screen(root, next_screen)
         else:
-            next_screen = 'Search_Screen'
-        self.change_screen(root, next_screen)
+            content = MDLabel(font_style='Body1',
+                              theme_text_color='Secondary',
+                              text="You need to enter something for me!",
+                              size_hint_y=None,
+                              valign='top')
+            content.bind(texture_size=content.setter('size'))
+            
+            self.dialog = MDDialog(title="There's nothing for me to do",
+                                   content=content,
+                                   size_hint=(.9, None),
+                                   height=dp(200),
+                                   auto_dismiss=False)
+            self.dialog.add_action_button("Dismiss",
+                                          action=lambda *x: self.dialog.dismiss())
+            self.dialog.open()
 
     def change_screen(self, root, next_screen):
         """Changes to specific screen base on user data"""
+        root.previousScreen = self.name
         root.transition.direction = 'left'
         root.current = next_screen
 
@@ -75,11 +104,18 @@ class SearchScreen(Screen):
     def process_request(self):
         """Processes user data"""
         self.user_data = core_process.search_by_keywords(self.user_data)
+        self.show_result()
 
     def show_result(self):
         """Show search result"""
-        for link in self.user_data:
-            self.ids.result_list.add_widget(OneLineListItem(text=link))
+        self.ids.result_list.clear_widgets()
+        for i in range(len(self.user_data['links'])):
+            video = TwoLineAvatarIconListItem(
+                text=self.user_data['title'][i],
+                secondary_text=self.user_data['links'][i],
+            )
+            video.add_widget(VideoThumbnail(source=self.user_data['images'][i]))
+            self.ids.result_list.add_widget(video)
 
 
 class DownloadScreen(Screen):
@@ -100,14 +136,16 @@ class ScreenControl(ScreenManager):
     searchScreen = ObjectProperty(None)
     downloadScreen = ObjectProperty(None)
     settingScreen = ObjectProperty(None)
+    previousScreen = StringProperty('')
 
     def transfer_data(self):
         """Transfers data from Main Screen to Another Screen when it take focus.
         A work around method to transfer data from screen to screen at the moment (Update in the future)."""
         if self.current == 'Search_Screen':
-            self.searchScreen.user_data = self.mainScreen.user_input
-            self.searchScreen.process_request()
-            self.searchScreen.show_result()
+            if self.previousScreen == 'Main_Screen':
+                self.searchScreen.user_data = self.mainScreen.user_input
+                self.searchScreen.process_request()
+            
         if self.current == 'Download_Screen':
             self.downloadScreen.download_soundtrack(self.mainScreen.user_input)
 
@@ -121,6 +159,8 @@ buildKV = Builder.load_file("uimanager.kv")
 
 class MyApp(App):
     """Dummy class for running app"""
+    theme_cls = ThemeManager()
+
     def build(self):
         Window.size = (360, 640)
         return buildKV

@@ -152,8 +152,17 @@ class CoreProcess(object):
         response = request.urlopen(search_url)
         html = response.read()
         soup = BeautifulSoup(html, 'html.parser')
+        result = {
+            'links': [],
+            'images': [],
+            'title': [],
+        }
         for video in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
-            yield "https://www.youtube.com" + video['href']
+            if not video['href'].split('=')[1].endswith('list'):
+                result['links'].append("https://www.youtube.com" + video['href'])
+                result['images'].append("http://img.youtube.com/vi/" + video['href'].split('=')[1] + "/hqdefault.jpg")
+                result['title'].append(video['title'])
+        return result
 
     def download_video(self, url):
         """
