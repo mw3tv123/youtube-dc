@@ -11,83 +11,144 @@ from kivymd.dialog import MDDialog
 from kivymd.label import MDLabel
 from kivymd.list import TwoLineAvatarListItem, ILeftBody
 from kivymd.theming import ThemeManager
-
 from lib.coreprocess import CoreProcess
 
-# This construct UI components for App
+# .-------------------.
+# |       App UI      |
+# '-------------------'
 main_widget_kv = '''
 #:import Toolbar kivymd.toolbar.Toolbar
 #:import MDTextField kivymd.textfields.MDTextField
+#:import MDDropdownMenu kivymd.menu.MDDropdownMenu
+#:import MDMenuItem kivymd.menu.MDMenuItem
+#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
 #:import MDSpinner kivymd.spinner.MDSpinner
 #:import get_color_from_hex kivy.utils.get_color_from_hex
 
-# Toolbar on the top of every screem
-<ScreenToolbar@Toolbar>:
-    pos_hint: {'center_x': 0.5, 'top': 1}
-    md_bg_color: get_color_from_hex(colors['Teal']['500'])
+# Toolbar on the top of every screen
+<Toolbar>:
+    pos_hint:           {'center_x': 0.5, 'top': 1}
+    md_bg_color:        get_color_from_hex(colors['Teal']['500'])
     background_palette: 'DeepPurple'
-    background_hue: 'A400'
+    background_hue:     'A400'
+
+# Add event handler when an item is press and release
+<MDMenuItem>:
+    on_release: app.change_options(self.text)
 
 # Main UI
 ScreenManager:
     # Main_Screen
     Screen:
-        id: main_screen
-        name: 'Main_Screen'
-        manager: 'screen_manager'
+        id:       main_screen
+        name:     'Main_Screen'
+        manager:  'screen_manager'
         on_enter: app.clear_cache()
-        ScreenToolbar:
+        Toolbar:
             right_action_items: [['settings', lambda x: app.change_screen('Setting_Screen')]]
+        # Receive user data
         MDTextField:
-            id: data_text
-            pos_hint: {'center_x': 0.5, 'center_y': 0.6}
-            size_hint: 0.8, None
-            hint_text: "Enter keywords or URL"
+            id:               data_text
+            pos_hint:         {'center_x': 0.5, 'center_y': 0.6}
+            size_hint:        0.8, None
+            hint_text:        "Enter keywords or URL"
             on_text_validate: app.get_user_data()
         MDRaisedButton:
-            text: "PROCESS"
+            text:             "PROCESS"
             elevation_normal: 2
-            opposite_colors: True
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            on_press: app.get_user_data()
+            opposite_colors:  True
+            pos_hint:         {'center_x': 0.5, 'center_y': 0.5}
+            on_press:         app.get_user_data()
 
     # Search_Screen
     Screen:
-        id: search_screen
-        name: 'Search_Screen'
-        manager: 'screen_manager'
+        id:       search_screen
+        name:     'Search_Screen'
+        manager:  'screen_manager'
         on_enter: app.search_keywords()
-        ScreenToolbar
-            left_action_items: [['home', lambda x: app.change_screen('Main_Screen')]]
+        Toolbar:
+            left_action_items:  [['home', lambda x: app.change_screen('Main_Screen')]]
             right_action_items: [['settings', lambda x: app.change_screen('Setting_Screen')]]
+        # Display all videos we search to the user
         ScrollView:
-            pos_hint: {'x': 0, 'top': 0.85}
+            pos_hint:    {'x': 0, 'top': 0.85}
             do_scroll_x: False
             MDList:
                 id: result_list
+                # This spinner is used for display "search process" and is removed when we get the result
+                # But currently not work as expected, will fix in the future
                 MDSpinner:
                     size_hint: None, None
-                    size: dp(46), dp(46)
-                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                    active: True
+                    size:      dp(46), dp(46)
+                    pos_hint:  {'center_x': 0.5, 'center_y': 0.5}
+                    active:    True
 
     # Download_Screen
     Screen:
-        id: download_screen
-        name: 'Download_Screen'
-        manager: 'screen_manager'
+        id:       download_screen
+        name:     'Download_Screen'
+        manager:  'screen_manager'
         on_enter: app.download_video()
-        ScreenToolbar
-            left_action_items: [['home', lambda x: app.change_screen('Main_Screen')]]
+        Toolbar:
+            left_action_items:  [['home', lambda x: app.change_screen('Main_Screen')]]
             right_action_items: [['settings', lambda x: app.change_screen('Setting_Screen')]]
 
     # Setting_Screen
     Screen:
-        id: setting_screen
-        name: 'Setting_Screen'
+        id:      setting_screen
+        name:    'Setting_Screen'
         manager: 'screen_manager'
-        ScreenToolbar
+        Toolbar:
             left_action_items: [['home', lambda x: app.change_screen('Main_Screen')]]
+        # Display setting for user configure
+        GridLayout:
+            id:      options_layout
+            cols:    2
+            padding: '10dp'
+            # File extensions option
+            MDLabel:
+                font_style:       'Subhead'
+                theme_text_color: 'Primary'
+                text_color:       (0,1,0,.4)
+                text:             "File extension"
+                halign:           'center'
+            MDRaisedButton:
+                id:              ext_opts
+                text:            app.core_process.options['postprocessors'][0]['preferredcodec']
+                size_hint:       None, None
+                size:            3 * dp(18), dp(28)
+                pos_hint:        {'center_x': 0.5, 'center_y': 0.5}
+                opposite_colors: True
+                on_release:      MDDropdownMenu(items=app.audio_extensions).open(self)
+            # Quality option
+            MDLabel:
+                font_style:       'Subhead'
+                theme_text_color: 'Primary'
+                text_color:       (0, 1, 0, .4)
+                text:             "Quality"
+                halign:           'center'
+            MDRaisedButton:
+                id:              quality_opts
+                text:            'Best' if app.core_process.options['format'] == 'bestaudio' else 'Worst'
+                size_hint:       None, None
+                size:            3 * dp(18), dp(28)
+                pos_hint:        {'center_x': 0.5, 'center_y': 0.5}
+                opposite_colors: True
+                on_release:      MDDropdownMenu(items=app.audio_qualities, width_mult=4).open(self)
+            MDLabel:
+                font_style:       'Subhead'
+                theme_text_color: 'Primary'
+                text_color:       (0, 1, 0, .4)
+                text:             "Restricted filename"
+                halign:           'center'
+            # Restrict file name option
+            MDCheckbox:
+                id:        restrict_filename_cb
+                size_hint: None, None
+                size:      dp(48), dp(48)
+                pos_hint:  {'center_x': 0.5, 'center_y': 0.4}
+                active:    app.core_process.options['restrictfilenames']
+                on_state: app.core_process.options['restrictfilenames'] = self.active
 '''
 
 
@@ -100,6 +161,26 @@ class YouTubeDownloader(App):
     core_process = CoreProcess()
     user_input = ''
     previousScreen = ''
+    audio_extensions = [{'viewclass': 'MDMenuItem',
+                         'text': 'best'},
+                        {'viewclass': 'MDMenuItem',
+                         'text': 'aac'},
+                        {'viewclass': 'MDMenuItem',
+                         'text': 'flac'},
+                        {'viewclass': 'MDMenuItem',
+                         'text': 'mp3'},
+                        {'viewclass': 'MDMenuItem',
+                         'text': 'm4a'},
+                        {'viewclass': 'MDMenuItem',
+                         'text': 'opus'},
+                        {'viewclass': 'MDMenuItem',
+                         'text': 'vorbis'},
+                        {'viewclass': 'MDMenuItem',
+                         'text': 'wav'}]
+    audio_qualities = [{'viewclass': 'MDMenuItem',
+                        'text': 'Best'},
+                       {'viewclass': 'MDMenuItem',
+                        'text': 'Worst'}]
 
     def build(self):
         """Build UI"""
@@ -117,7 +198,7 @@ class YouTubeDownloader(App):
             else:
                 next_screen = 'Search_Screen'
             self.main_widget.current = next_screen
-        
+
         # If user does not give us anything, a pop up will remind they
         else:
             content = MDLabel(font_style='Body1',
@@ -126,7 +207,7 @@ class YouTubeDownloader(App):
                               size_hint_y=None,
                               valign='top')
             content.bind(texture_size=content.setter('size'))
-        
+
             dialog = MDDialog(title="There's nothing for me to do",
                               content=content,
                               size_hint=(.9, None),
@@ -159,7 +240,21 @@ class YouTubeDownloader(App):
             # video.bind(on_press=(self.change_screen('Download_Screen'), self.download_video(data['links'][i])))
 
     def download_video(self, url):
+        """Just download the video base on the option"""
         self.core_process.download_video(url)
+
+    def change_options(self, text):
+        """"""
+        if text == 'Best Audio':
+            self.main_widget.ids.quality_opts.text = text
+            self.core_process.options['format'] = 'bestaudio'
+        if text == 'Worst Audio':
+            self.main_widget.ids.quality_opts.text = text
+            self.core_process.options['format']  = 'worstaudio'
+        else:
+            self.main_widget.ids.ext_opts.text = text
+            self.core_process.options['postprocessors'][0]['preferredcodec'] = text
+        print(self.core_process.options)
 
 
 class VideoThumbnail(ILeftBody, AsyncImage):

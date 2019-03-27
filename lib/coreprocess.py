@@ -92,10 +92,13 @@ class CoreProcess(object):
                     'preferredquality': '192',
                 }],
                 'outtmpl': self.default_storage_directory + "/" + file_sample,
-                'restrictfilenames': True,
+                'restrictfilenames': False,
                 'debug_printtraffic': False,
                 'logger': LogHandler(),
                 'progress_hooks': [progress_handler],
+                'simulate': False,
+                'forcedescription': False,
+                'forcetitle': False,
             }
         self.load_config(path=self.options_file_path)
 
