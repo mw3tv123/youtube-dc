@@ -2,7 +2,7 @@
 # |      imports      |
 # '-------------------'
 from kivy.app import App
-from kivy.core.window import Window
+# from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.uix.image import AsyncImage
@@ -186,7 +186,7 @@ class YouTubeDownloader(App):
         """Build UI"""
         self.theme_cls.theme_style = 'Dark'
         self.main_widget = Builder.load_string(main_widget_kv)
-        Window.size = (360, 640)
+        # Window.size = (360, 640)
         return self.main_widget
 
     def get_user_data(self):

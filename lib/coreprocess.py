@@ -4,7 +4,6 @@ from urllib.parse import quote
 from urllib import request
 from urllib3.exceptions import HTTPError
 from bs4 import BeautifulSoup
-from PIL import Image
 import os
 import time
 import json
@@ -213,18 +212,6 @@ class CoreProcess(object):
                     path = os.path.join(root, name)
         else:
             CoreProcess.store_log("{} - Not in root directory! Please run in root directory!".format(datetime.now()))
-        return path
-
-    @staticmethod
-    def resize_image(name, width, height):
-        """Resize image"""
-        path = CoreProcess.get_absolute_path(name)
-        temp_path = path.split("/")
-        name, extension = temp_path[len(temp_path)-1].split(".")
-        image = Image.open(path)
-        image = image.resize((width, height), Image.ANTIALIAS)
-        path = os.path.join(os.path.dirname(path), "_" + name + "." + extension)
-        image.save(path, extension)
         return path
 
     @staticmethod
