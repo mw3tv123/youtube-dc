@@ -2,27 +2,36 @@
 # |      imports      |
 # '-------------------'
 from kivy.app import App
-# from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
+from kivy.network.urlrequest import UrlRequest
 from kivy.uix.image import AsyncImage
 
 from kivymd.dialog import MDDialog
 from kivymd.label import MDLabel
 from kivymd.list import TwoLineAvatarListItem, ILeftBody
 from kivymd.theming import ThemeManager
-from lib.coreprocess import CoreProcess
 
+from bs4 import BeautifulSoup
+from functools import partial
+import json
+from plyer import storagepath
+import os
+from urllib.parse import quote
+import youtube_dl
+from observable import notify_observers
+from observer import Observer
 # .-------------------.
 # |       App UI      |
 # '-------------------'
 main_widget_kv = '''
 #:import Toolbar kivymd.toolbar.Toolbar
-#:import MDTextField kivymd.textfields.MDTextField
+#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
 #:import MDDropdownMenu kivymd.menu.MDDropdownMenu
 #:import MDMenuItem kivymd.menu.MDMenuItem
-#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
+#:import MDProgressBar kivymd.progressbar.MDProgressBar
 #:import MDSpinner kivymd.spinner.MDSpinner
+#:import MDTextField kivymd.textfields.MDTextField
 #:import get_color_from_hex kivy.utils.get_color_from_hex
 
 # Toolbar on the top of every screen
@@ -75,6 +84,7 @@ ScreenManager:
             do_scroll_x: False
             MDList:
                 id: result_list
+                size: self.parent.size
                 # This spinner is used for display "search process" and is removed when we get the result
                 # But currently not work as expected, will fix in the future
                 MDSpinner:
@@ -92,6 +102,14 @@ ScreenManager:
         Toolbar:
             left_action_items:  [['home', lambda x: app.change_screen('Main_Screen')]]
             right_action_items: [['settings', lambda x: app.change_screen('Setting_Screen')]]
+        MDLabel:
+            font_style:       'Subhead'
+            theme_text_color: 'Primary'
+            text_color:       (0, 1, 0, .4)
+            text:             
+            halign:           'center'
+        MDProgressBar:
+            value:
 
     # Setting_Screen
     Screen:
@@ -114,7 +132,7 @@ ScreenManager:
                 halign:           'center'
             MDRaisedButton:
                 id:              ext_opts
-                text:            app.core_process.options['postprocessors'][0]['preferredcodec']
+                text:            app.options['postprocessors'][0]['preferredcodec']
                 size_hint:       None, None
                 size:            3 * dp(18), dp(28)
                 pos_hint:        {'center_x': 0.5, 'center_y': 0.5}
@@ -129,38 +147,58 @@ ScreenManager:
                 halign:           'center'
             MDRaisedButton:
                 id:              quality_opts
-                text:            'Best' if app.core_process.options['format'] == 'bestaudio' else 'Worst'
+                text:            'Best' if app.options['format'] == 'bestaudio' else 'Worst'
                 size_hint:       None, None
                 size:            3 * dp(18), dp(28)
                 pos_hint:        {'center_x': 0.5, 'center_y': 0.5}
                 opposite_colors: True
                 on_release:      MDDropdownMenu(items=app.audio_qualities, width_mult=4).open(self)
+            # Restrict file name option
             MDLabel:
                 font_style:       'Subhead'
                 theme_text_color: 'Primary'
                 text_color:       (0, 1, 0, .4)
                 text:             "Restricted filename"
                 halign:           'center'
-            # Restrict file name option
             MDCheckbox:
                 id:        restrict_filename_cb
                 size_hint: None, None
                 size:      dp(48), dp(48)
                 pos_hint:  {'center_x': 0.5, 'center_y': 0.4}
-                active:    app.core_process.options['restrictfilenames']
-                on_state: app.core_process.options['restrictfilenames'] = self.active
+                active:    app.options['restrictfilenames']
+                on_state:  app.options['restrictfilenames'] = self.active
 '''
 
 
 # .-------------------.
 # |      classes      |
 # '-------------------'
-class YouTubeDownloader(App):
-    """One Class maintains all stuffs"""
+class LogHandler(object):
+    """LogHandler handle messages for each case"""
+    @staticmethod
+    def debug(msg):
+        pass
+
+    @staticmethod
+    def warning(msg):
+        notify_observers(msg, mode="warning")
+
+    @staticmethod
+    def error(msg):
+        notify_observers(msg, mode="error")
+
+
+def progress_handler(progress_status):
+    """Handler download status"""
+    notify_observers(progress_status, mode="update")
+
+
+class YouTubeDownloader(App, Observer):
+    """App class maintains all stuffs"""
     theme_cls = ThemeManager()
-    core_process = CoreProcess()
     user_input = ''
     previousScreen = ''
+    # Audio output extensions
     audio_extensions = [{'viewclass': 'MDMenuItem',
                          'text': 'best'},
                         {'viewclass': 'MDMenuItem',
@@ -177,17 +215,81 @@ class YouTubeDownloader(App):
                          'text': 'vorbis'},
                         {'viewclass': 'MDMenuItem',
                          'text': 'wav'}]
+    # Audio output quality
     audio_qualities = [{'viewclass': 'MDMenuItem',
                         'text': 'Best'},
                        {'viewclass': 'MDMenuItem',
                         'text': 'Worst'}]
+    # Path to file contain setting configuration
+    config_path = storagepath.get_application_dir() + '/config.txt'
 
     def build(self):
-        """Build UI"""
+        """Start App"""
         self.theme_cls.theme_style = 'Dark'
+        self.load_settings()
         self.main_widget = Builder.load_string(main_widget_kv)
-        # Window.size = (360, 640)
         return self.main_widget
+
+    def load_settings(self):
+        """Initiate setting by create a new options structure and load from local file if configuration file existed."""
+        default_storage_directory = storagepath.get_application_dir() + "/my_audio/"
+        # Check if Download folder exist or not. If not then we create it
+        if not os.path.isdir(default_storage_directory):
+            os.mkdir(default_storage_directory)
+        file_sample = "%(title)s.%(ext)s"
+        self.options = {
+            'format': 'bestaudio',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'outtmpl': default_storage_directory + file_sample,
+            'restrictfilenames': False,
+            'debug_printtraffic': False,
+            'logger': LogHandler(),
+            'progress_hooks': [progress_handler],
+            'simulate': False,
+            'forcedescription': False,
+            'forcetitle': False,
+        }
+        # If old setting detected, load it
+        if os.path.isfile(self.config_path):
+            with open(self.config_path) as file:
+                data = json.load(file)
+                if 'format' in data:
+                    self.options['format'] = data['format']
+                if 'postprocessors' in data:
+                    self.options['postprocessors'].clear()
+                    self.options['postprocessors'] = data['postprocessors']
+                if 'restrictfilenames' in data:
+                    self.options['restrictfilenames'] = data['restrictfilenames']
+        else:  # If not, create a new one
+            self.save_setting()
+
+    def change_options(self, text):
+        """Call when user change an option in Setting Screen"""
+        if text == 'Best':
+            self.main_widget.ids.quality_opts.text = text
+            self.options['format'] = 'bestaudio'
+        if text == 'Worst':
+            self.main_widget.ids.quality_opts.text = text
+            self.options['format']  = 'worstaudio'
+        else:
+            self.main_widget.ids.ext_opts.text = text
+            self.options['postprocessors'][0]['preferredcodec'] = text
+
+    def save_setting(self):
+        """Save setting configuration to file"""
+        data = {}
+        for k, v in self.options.items():
+            if isinstance(v, LogHandler):
+                continue
+            if type(v) == list and callable(v[0]):
+                continue
+            data[k] = v
+        with open(self.config_path, "w") as file:
+            json.dump(data, file)
 
     def get_user_data(self):
         """Base on user input to determine which screen next"""
@@ -220,13 +322,32 @@ class YouTubeDownloader(App):
         """Clears recently cache data in this screen"""
         self.main_widget.ids.data_text.text = ''
 
-    def change_screen(self, next_screen):
+    def change_screen(self, next_screen, download=False, url=None):
         """Change to another screen"""
         self.main_widget.current = next_screen
+        if download:
+            self.download_video(url)
 
     def search_keywords(self):
         """Processes user data"""
-        result = self.core_process.search_by_keywords(self.user_input)
+        query = quote(self.user_input)
+        search_url = "https://www.youtube.com/results?search_query=" + query
+        req = UrlRequest(url=search_url, on_success=self.scrap_result)
+
+    def scrap_result(self, request, response):
+        """Scrap all info we need in the response text"""
+        soup = BeautifulSoup(response, 'html.parser')
+        result = {
+            'links': [],
+            'images': [],
+            'title': [],
+        }
+        # Split only video tag
+        for video in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
+            if not video['href'].split('=')[1].endswith('list'):
+                result['links'].append("https://www.youtube.com" + video['href'])
+                result['images'].append("http://img.youtube.com/vi/" + video['href'].split('=')[1] + "/hqdefault.jpg")
+                result['title'].append(video['title'])
         self.show_result(result)
 
     def show_result(self, data):
@@ -235,26 +356,35 @@ class YouTubeDownloader(App):
         for i in range(len(data['links'])):
             video = TwoLineAvatarListItem(text=data['title'][i],
                                           secondary_text=data['links'][i])
+            # noinspection PyArgumentList
             video.add_widget(VideoThumbnail(source=data['images'][i]))
             self.main_widget.ids.result_list.add_widget(video)
-            # video.bind(on_press=(self.change_screen('Download_Screen'), self.download_video(data['links'][i])))
+            video.bind(on_press=partial(self.change_screen,
+                                        next_screen='Download_Screen',
+                                        download=True,
+                                        url=data['links'][i]))
 
     def download_video(self, url):
         """Just download the video base on the option"""
-        self.core_process.download_video(url)
+        with youtube_dl.YoutubeDL(self.options) as ydl:
+            if type(url) == str:
+                ydl.download([url])
+            else:
+                for element in url:
+                    ydl.download([element])
 
-    def change_options(self, text):
-        """"""
-        if text == 'Best Audio':
-            self.main_widget.ids.quality_opts.text = text
-            self.core_process.options['format'] = 'bestaudio'
-        if text == 'Worst Audio':
-            self.main_widget.ids.quality_opts.text = text
-            self.core_process.options['format']  = 'worstaudio'
-        else:
-            self.main_widget.ids.ext_opts.text = text
-            self.core_process.options['postprocessors'][0]['preferredcodec'] = text
-        print(self.core_process.options)
+    def download_status(self, *args, **kwargs):
+        print('kwargs = ', kwargs)
+        print('args = ', args)
+
+    def warning(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
+        pass
+
+    def on_stop(self):
+        self.save_setting()
 
 
 class VideoThumbnail(ILeftBody, AsyncImage):
