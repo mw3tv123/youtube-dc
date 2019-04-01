@@ -1,0 +1,1 @@
+{"simulate": false, "forcedescription": false, "debug_printtraffic": false, "postprocessors": [{"key": "FFmpegExtractAudio", "preferredquality": "192", "preferredcodec": "mp3"}], "format": "bestaudio", "restrictfilenames": false, "forcetitle": false, "outtmpl": "/home/tqhung1/Works/youtube-dc/android/my_audio/%(title)s.%(ext)s"}

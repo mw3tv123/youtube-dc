@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from datetime import datetime
+from urllib.error import URLError
 from urllib.parse import quote
 from urllib import request
 from urllib3.exceptions import HTTPError
@@ -13,9 +14,9 @@ import youtube_dl
 import subprocess
 
 try:
-    from lib.observable import notify_observers
+    from android.observable import notify_observers
 except ImportError:
-    from .observable import notify_observers
+    from android.observable import notify_observers
 '''
     This Python script enable user to download a YouTube video back to our computer and
     convert it to any format. This is a tiny project for learning new thing from Python.
@@ -142,8 +143,7 @@ class CoreProcess(object):
             except TypeError as e:
                 self.store_log("{0} - {1}".format(datetime.now(), e))
 
-    @staticmethod
-    def search_by_keywords(keyword=''):
+    def search_by_keywords(self, keyword=''):
         """
         Send search request to YouTube with keyword and show result.
 
@@ -151,9 +151,12 @@ class CoreProcess(object):
         """
         query = quote(keyword)
         search_url = "https://www.youtube.com/results?search_query=" + query
-        response = request.urlopen(search_url)
-        html = response.read()
-        soup = BeautifulSoup(html, 'html.parser')
+        try:
+            response = request.urlopen(search_url)
+            html = response.read()
+            soup = BeautifulSoup(html, 'html.parser')
+        except URLError as e:
+            self.store_log("{0} - {1}".format(datetime.now(), e))
         result = {
             'links': [],
             'images': [],
