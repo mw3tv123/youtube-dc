@@ -5,6 +5,7 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.network.urlrequest import UrlRequest
+from kivy.properties import NumericProperty
 from kivy.uix.image import AsyncImage
 
 from kivymd.dialog import MDDialog
@@ -16,18 +17,21 @@ from bs4 import BeautifulSoup
 import json
 from plyer import storagepath
 import os
+from threading import Thread
+import time
 from urllib.parse import quote
-# from lib.observable import notify_observers
+import youtube_dl
 # .-------------------.
 # |       App UI      |
 # '-------------------'
 main_widget_kv = '''
 #:import Toolbar kivymd.toolbar.Toolbar
-#:import MDTextField kivymd.textfields.MDTextField
+#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
 #:import MDDropdownMenu kivymd.menu.MDDropdownMenu
 #:import MDMenuItem kivymd.menu.MDMenuItem
-#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
+#:import MDProgressBar kivymd.progressbar.MDProgressBar
 #:import MDSpinner kivymd.spinner.MDSpinner
+#:import MDTextField kivymd.textfields.MDTextField
 #:import get_color_from_hex kivy.utils.get_color_from_hex
 
 # Toolbar on the top of every screen
@@ -50,7 +54,7 @@ ScreenManager:
         manager:  'screen_manager'
         on_enter: app.clear_cache()
         Toolbar:
-            right_action_items: [['settings', lambda x: app.change_screen('Setting_Screen')]]
+            right_action_items: [['settings', lambda x: app.change_screen(next_screen='Setting_Screen')]]
         # Receive user data
         MDTextField:
             id:               data_text
@@ -72,8 +76,8 @@ ScreenManager:
         manager:  'screen_manager'
         on_enter: app.search_keywords()
         Toolbar:
-            left_action_items:  [['home', lambda x: app.change_screen('Main_Screen')]]
-            right_action_items: [['settings', lambda x: app.change_screen('Setting_Screen')]]
+            left_action_items:  [['home', lambda x: app.change_screen(next_screen='Main_Screen')]]
+            right_action_items: [['settings', lambda x: app.change_screen(next_screen='Setting_Screen')]]
         # Display all videos we search to the user
         ScrollView:
             pos_hint:    {'x': 0, 'top': 0.85}
@@ -94,10 +98,19 @@ ScreenManager:
         id:       download_screen
         name:     'Download_Screen'
         manager:  'screen_manager'
-        on_enter: app.download_video()
         Toolbar:
-            left_action_items:  [['home', lambda x: app.change_screen('Main_Screen')]]
-            right_action_items: [['settings', lambda x: app.change_screen('Setting_Screen')]]
+            left_action_items:  [['home', lambda x: app.change_screen(next_screen='Main_Screen')]]
+            right_action_items: [['settings', lambda x: app.change_screen(next_screen='Setting_Screen')]]
+        MDLabel:
+            id:               video_title_label
+            font_style:       'Subhead'
+            theme_text_color: 'Primary'
+            text_color:       (0, 1, 0, .4)
+            halign:           'center'
+        MDProgressBar:
+            size_hint_x: 0.8
+            pos_hint:    {'x': 0.1} 
+            value:       app.progress_percent
 
     # Setting_Screen
     Screen:
@@ -105,12 +118,12 @@ ScreenManager:
         name:    'Setting_Screen'
         manager: 'screen_manager'
         Toolbar:
-            left_action_items: [['home', lambda x: app.change_screen('Main_Screen')]]
+            left_action_items: [['home', lambda x: app.change_screen(next_screen='Main_Screen')]]
         # Display setting for user configure
         GridLayout:
-            id:      options_layout
-            cols:    2
-            padding: '10dp'
+            cols:     2
+            pos_hint: {'top': 0.9}
+            padding:  '10dp'
             # File extensions option
             MDLabel:
                 font_style:       'Subhead'
@@ -118,6 +131,14 @@ ScreenManager:
                 text_color:       (0,1,0,.4)
                 text:             "File extension"
                 halign:           'center'
+                size_hint:        None, None
+            MDRaisedButton:
+                id:              ext_opts
+                text:            app.options['postprocessors'][0]['preferredcodec']
+                size_hint:       None, None
+                size:            3 * dp(18), dp(28)
+                opposite_colors: True
+                on_release:      MDDropdownMenu(items=app.audio_extensions).open(self)
             MDRaisedButton:
                 id:              ext_opts
                 text:            app.options['postprocessors'][0]['preferredcodec']
@@ -133,6 +154,7 @@ ScreenManager:
                 text_color:       (0, 1, 0, .4)
                 text:             "Quality"
                 halign:           'center'
+                size_hint:        None, None
             MDRaisedButton:
                 id:              quality_opts
                 text:            'Best' if app.options['format'] == 'bestaudio' else 'Worst'
@@ -141,13 +163,14 @@ ScreenManager:
                 pos_hint:        {'center_x': 0.5, 'center_y': 0.5}
                 opposite_colors: True
                 on_release:      MDDropdownMenu(items=app.audio_qualities, width_mult=4).open(self)
+            # Restrict file name option
             MDLabel:
                 font_style:       'Subhead'
                 theme_text_color: 'Primary'
                 text_color:       (0, 1, 0, .4)
                 text:             "Restricted filename"
                 halign:           'center'
-            # Restrict file name option
+                size_hint:        None, None
             MDCheckbox:
                 id:        restrict_filename_cb
                 size_hint: None, None
@@ -169,26 +192,20 @@ class LogHandler(object):
 
     @staticmethod
     def warning(msg):
-        pass
-        # notify_observers(msg, mode="warning")
+        notify_observers(msg, mode="warning")
 
     @staticmethod
     def error(msg):
-        pass
-        # notify_observers(msg, mode="error")
-
-
-def progress_handler(progress_status):
-    """Handler download status"""
-    pass
-    # notify_observers(progress_status, mode="update")
+        notify_observers(msg, mode="error")
 
 
 class YouTubeDownloader(App):
-    """One Class maintains all stuffs"""
+    """App class maintains all stuffs"""
     theme_cls = ThemeManager()
     user_input = ''
     previousScreen = ''
+    progress_percent = NumericProperty(0)
+    # Audio output extensions
     audio_extensions = [{'viewclass': 'MDMenuItem',
                          'text': 'best'},
                         {'viewclass': 'MDMenuItem',
@@ -205,26 +222,27 @@ class YouTubeDownloader(App):
                          'text': 'vorbis'},
                         {'viewclass': 'MDMenuItem',
                          'text': 'wav'}]
+    # Audio output quality
     audio_qualities = [{'viewclass': 'MDMenuItem',
                         'text': 'Best'},
                        {'viewclass': 'MDMenuItem',
                         'text': 'Worst'}]
+    # Path to file contain setting configuration
     config_path = storagepath.get_application_dir() + '/config.txt'
 
     def build(self):
-        """Build UI"""
+        """Start App"""
         self.theme_cls.theme_style = 'Dark'
         self.load_settings()
         self.main_widget = Builder.load_string(main_widget_kv)
         return self.main_widget
 
     def load_settings(self):
-        """
-        Load config from file.
-
-        :param kwargs: Pair of keyword to indicate option (path, file,...)
-        """
+        """Initiate setting by create a new options structure and load from local file if configuration file existed."""
         default_storage_directory = storagepath.get_application_dir() + "/my_audio/"
+        # Check if Download folder exist or not. If not then we create it
+        if not os.path.isdir(default_storage_directory):
+            os.mkdir(default_storage_directory)
         file_sample = "%(title)s.%(ext)s"
         self.options = {
             'format': 'bestaudio',
@@ -237,12 +255,12 @@ class YouTubeDownloader(App):
             'restrictfilenames': False,
             'debug_printtraffic': False,
             'logger': LogHandler(),
-            'progress_hooks': [progress_handler],
+            'progress_hooks': [self.process_handler],
             'simulate': False,
             'forcedescription': False,
             'forcetitle': False,
         }
-
+        # If old setting detected, load it
         if os.path.isfile(self.config_path):
             with open(self.config_path) as file:
                 data = json.load(file)
@@ -253,6 +271,20 @@ class YouTubeDownloader(App):
                     self.options['postprocessors'] = data['postprocessors']
                 if 'restrictfilenames' in data:
                     self.options['restrictfilenames'] = data['restrictfilenames']
+        else:  # If not, create a new one
+            self.save_setting()
+
+    def change_options(self, text):
+        """Call when user change an option in Setting Screen"""
+        if text == 'Best':
+            self.main_widget.ids.quality_opts.text = text
+            self.options['format'] = 'bestaudio'
+        if text == 'Worst':
+            self.main_widget.ids.quality_opts.text = text
+            self.options['format'] = 'worstaudio'
+        else:
+            self.main_widget.ids.ext_opts.text = text
+            self.options['postprocessors'][0]['preferredcodec'] = text
 
     def save_setting(self):
         """Save setting configuration to file"""
@@ -297,24 +329,29 @@ class YouTubeDownloader(App):
         """Clears recently cache data in this screen"""
         self.main_widget.ids.data_text.text = ''
 
-    def change_screen(self, next_screen):
+    def change_screen(self, **kwargs):
         """Change to another screen"""
-        self.main_widget.current = next_screen
+        self.main_widget.current = kwargs['next_screen']
+        if 'title' in kwargs:
+            self.main_widget.ids.video_title_label.text = kwargs['title']
+            self.downloading_process(kwargs['url'])
 
     def search_keywords(self):
         """Processes user data"""
         query = quote(self.user_input)
         search_url = "https://www.youtube.com/results?search_query=" + query
-        req = UrlRequest(url=search_url, on_success=self.scrap_result)
+        UrlRequest(url=search_url, on_success=self.scrap_result)
 
     def scrap_result(self, request, response):
-        """Scrap all info we need in the result"""
+        """Scrap all info we need in the response text"""
+        del request
         soup = BeautifulSoup(response, 'html.parser')
         result = {
             'links': [],
             'images': [],
             'title': [],
         }
+        # Split only video tag
         for video in soup.find_all(attrs={'class': 'yt-uix-tile-link'}):
             if not video['href'].split('=')[1].endswith('list'):
                 result['links'].append("https://www.youtube.com" + video['href'])
@@ -322,31 +359,43 @@ class YouTubeDownloader(App):
                 result['title'].append(video['title'])
         self.show_result(result)
 
+    def _get_video_description(self):
+        pass
+
     def show_result(self, data):
         """Show search result"""
         self.main_widget.ids.result_list.clear_widgets()
         for i in range(len(data['links'])):
             video = TwoLineAvatarListItem(text=data['title'][i],
                                           secondary_text=data['links'][i])
+            # noinspection PyArgumentList
             video.add_widget(VideoThumbnail(source=data['images'][i]))
             self.main_widget.ids.result_list.add_widget(video)
-            # video.bind(on_press=(self.change_screen('Download_Screen'), self.download_video(data['links'][i])))
+            video.bind(on_press=lambda event: self.change_screen(next_screen='Download_Screen',
+                                                                 title=data['title'][i],
+                                                                 url=data['links'][i],
+                                                                 ))
 
-    def download_video(self, url):
+    def downloading_process(self, link):
         """Just download the video base on the option"""
-        pass
+        def download_video(url):
+            with youtube_dl.YoutubeDL(self.options) as ydl:
+                if type(url) == str:
+                    ydl.download([url])
+                else:
+                    for element in url:
+                        ydl.download([element])
+        process = Thread(target=download_video, args=[link])
+        process.start()
 
-    def change_options(self, text):
-        """Call when user change an option in Setting Screen"""
-        if text == 'Best':
-            self.main_widget.ids.quality_opts.text = text
-            self.options['format'] = 'bestaudio'
-        if text == 'Worst':
-            self.main_widget.ids.quality_opts.text = text
-            self.options['format']  = 'worstaudio'
-        else:
-            self.main_widget.ids.ext_opts.text = text
-            self.options['postprocessors'][0]['preferredcodec'] = text
+    def process_handler(self, progress_status):
+        """Handler download status"""
+        time.sleep(1)
+        if progress_status['status'] == 'downloading' and 'total_bytes_estimate' in progress_status:
+            video_download_percent = int(progress_status['downloaded_bytes'] * 100 / progress_status['total_bytes_estimate'])
+            self.progress_percent = int(video_download_percent * 100 / 90)
+        if progress_status['status'] == 'finished':
+            self.progress_percent = 100
 
     def on_stop(self):
         self.save_setting()

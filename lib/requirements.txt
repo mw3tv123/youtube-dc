@@ -1,4 +1,0 @@
-bs4
-youtube-dl
-Pillow
-urllib3
