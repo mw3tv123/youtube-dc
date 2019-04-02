@@ -12,6 +12,10 @@ def unregister(observer):
 
 
 def notify_observers(*args, **kwargs):
+    if kwargs["mode"] == "debug":
+        for observer in observers:
+            observer.debug(*args, **kwargs)
+
     if kwargs["mode"] == "update":
         for observer in observers:
             observer.download_status(*args, **kwargs)

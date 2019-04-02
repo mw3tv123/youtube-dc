@@ -2,6 +2,7 @@
 # |      imports      |
 # '-------------------'
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.network.urlrequest import UrlRequest
@@ -11,16 +12,24 @@ from kivy.uix.image import AsyncImage
 from kivymd.dialog import MDDialog
 from kivymd.label import MDLabel
 from kivymd.list import TwoLineAvatarListItem, ILeftBody
+from kivymd.snackbar import Snackbar
 from kivymd.theming import ThemeManager
 
-from bs4 import BeautifulSoup
 import json
-from plyer import storagepath
 import os
-from threading import Thread
 import time
-from urllib.parse import quote
 import youtube_dl
+from bs4 import BeautifulSoup
+from plyer import storagepath
+from threading import Thread
+from urllib.parse import quote
+
+try:
+    from android.observable import notify_observers, register, unregister
+    from android.observer import Observer
+except ImportError:
+    from observable import notify_observers, register, unregister
+    from observer import Observer
 # .-------------------.
 # |       App UI      |
 # '-------------------'
@@ -29,7 +38,7 @@ main_widget_kv = '''
 #:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
 #:import MDDropdownMenu kivymd.menu.MDDropdownMenu
 #:import MDMenuItem kivymd.menu.MDMenuItem
-#:import MDProgressBar kivymd.progressbar.MDProgressBar
+#:import MDProgressBar progressbar.MDProgressBar
 #:import MDSpinner kivymd.spinner.MDSpinner
 #:import MDTextField kivymd.textfields.MDTextField
 #:import get_color_from_hex kivy.utils.get_color_from_hex
@@ -107,6 +116,7 @@ ScreenManager:
             theme_text_color: 'Primary'
             text_color:       (0, 1, 0, .4)
             halign:           'center'
+            pos_hint:         {'center_x': 0.5, 'center_y': 0.7}
         MDProgressBar:
             size_hint_x: 0.8
             pos_hint:    {'x': 0.1} 
@@ -191,18 +201,23 @@ class LogHandler(object):
     """LogHandler handle messages for each case"""
     @staticmethod
     def debug(msg):
-        pass
+        notify_observers('[DEBUGGING] ' + msg, mode='debug')
 
     @staticmethod
     def warning(msg):
-        pass
+        notify_observers('[WARNING] ' + msg, mode='warning')
 
     @staticmethod
     def error(msg):
-        pass
+        notify_observers('[ERROR] ' + msg, mode='error')
 
 
-class YouTubeDownloader(App):
+def process_handler(progress_status):
+    """Use for trigger update downloading status"""
+    notify_observers(progress_status, mode='update')
+
+
+class YouTubeDownloader(App, Observer):
     """App class maintains all stuffs"""
     theme_cls = ThemeManager()
     user_input = ''
@@ -236,6 +251,7 @@ class YouTubeDownloader(App):
 
     def build(self):
         """Start App"""
+        register(self)
         self.theme_cls.theme_style = 'Dark'
         self.load_settings()
         self.main_widget = Builder.load_string(main_widget_kv)
@@ -259,7 +275,7 @@ class YouTubeDownloader(App):
             'restrictfilenames': False,
             'debug_printtraffic': False,
             'logger': LogHandler(),
-            'progress_hooks': [self.process_handler],
+            'progress_hooks': [process_handler],
             'simulate': False,
             'forcedescription': False,
             'forcetitle': False,
@@ -338,7 +354,7 @@ class YouTubeDownloader(App):
         self.main_widget.current = kwargs['next_screen']
         if 'title' in kwargs:
             self.main_widget.ids.video_title_label.text = kwargs['title']
-            self.downloading_process(kwargs['url'])
+            self.download_target_url(kwargs['url'])
 
     def search_keywords(self):
         """Processes user data"""
@@ -363,9 +379,6 @@ class YouTubeDownloader(App):
                 result['title'].append(video['title'])
         self.show_result(result)
 
-    def _get_video_description(self):
-        pass
-
     def show_result(self, data):
         """Show search result"""
         self.main_widget.ids.result_list.clear_widgets()
@@ -380,28 +393,45 @@ class YouTubeDownloader(App):
                                                                  url=data['links'][i],
                                                                  ))
 
-    def downloading_process(self, link):
+    def check_alive(self, *args):
+        print(args)
+        if self.progress_percent == 95:
+            self.progress_percent = 100
+            time.sleep(2)
+            self.change_screen(next_screen='Search_Screen')
+            Snackbar(text='Download completed!').show()
+
+    def download_target_url(self, link):
         """Just download the video base on the option"""
-        def download_video(url):
+        def pull_audio_back(url):
             with youtube_dl.YoutubeDL(self.options) as ydl:
                 if type(url) == str:
                     ydl.download([url])
                 else:
                     for element in url:
                         ydl.download([element])
-        process = Thread(target=download_video, args=[link])
+        process = Thread(target=pull_audio_back, args=[link])
         process.start()
+        Clock.schedule_one(self.check_alive, 0)
 
-    def process_handler(self, progress_status):
+    def download_status(self, *args, **kwargs):
         """Handler download status"""
-        time.sleep(1)
-        if progress_status['status'] == 'downloading' and 'total_bytes_estimate' in progress_status:
-            _download_percent = int(progress_status['downloaded_bytes'] * 100 / progress_status['total_bytes_estimate'])
-            self.progress_percent = int(_download_percent * 100 / 90)
-        if progress_status['status'] == 'finished':
-            self.progress_percent = 100
+        if args[0]['status'] == 'downloading' and 'total_bytes_estimate' in args[0]:
+            video_download_percent = int(args[0]['downloaded_bytes'] * 100 / args[0]['total_bytes_estimate'])
+            self.progress_percent = int(video_download_percent * 90 / 100)
+
+    def debug(self, *args, **kwargs):
+        if 'Deleting' in args[0]:
+            self.progress_percent = 95
+
+    def warning(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
+        pass
 
     def on_stop(self):
+        unregister(self)
         self.save_setting()
 
 
