@@ -21,6 +21,7 @@ import time
 import youtube_dl
 from bs4 import BeautifulSoup
 from plyer import storagepath
+from jnius import autoclass, cast
 from threading import Thread
 from urllib.parse import quote
 
@@ -253,9 +254,15 @@ class YouTubeDownloader(App, Observer):
         """Start App"""
         register(self)
         self.theme_cls.theme_style = 'Dark'
-        self.load_settings()
         self.main_widget = Builder.load_string(main_widget_kv)
         return self.main_widget
+
+    def on_start(self):
+        """For get user permission to create setting file"""
+        PythonActivity = autoclass('org.renpy.android.PythonActivity')
+        ActivityCompat = autoclass('android.support.v4.app.ActivityCompat')
+        ActivityCompat.requestPermissions(PythonActivity.mActivity, ['WRITE_EXTERNAL_STORAGE', 'READ_EXTERNAL_STORAGE'])
+        self.load_settings()
 
     def load_settings(self):
         """Initiate setting by create a new options structure and load from local file if configuration file existed."""

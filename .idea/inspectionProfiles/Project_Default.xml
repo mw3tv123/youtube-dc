@@ -19,6 +19,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="urllib.quote" />
+          <option value="android.main.*" />
         </list>
       </option>
     </inspection_tool>

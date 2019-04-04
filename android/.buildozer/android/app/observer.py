@@ -9,6 +9,10 @@ class Observer(object):
         pass
 
     @abstractmethod
+    def debug(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
     def warning(self, *args, **kwargs):
         pass
 

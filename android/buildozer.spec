@@ -36,7 +36,7 @@ version = 0.2
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,kivy==master,git+https://gitlab.com/kivymd/KivyMD.git,youtube-dl,urllib3,beautifulsoup4,plyer
+requirements = python3,kivy,kivy==master,git+https://gitlab.com/kivymd/KivyMD.git,youtube-dl,urllib3,beautifulsoup4,plyer,pyjnius
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -85,7 +85,7 @@ fullscreen = 0
 #android.presplash_color = #FFFFFF
 
 # (list) Permissions
-android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE
+android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 
 # (int) Target Android API, should be as high as possible.
 #android.api = 27
